@@ -1,0 +1,492 @@
+:root {
+  --bg: #f4eddb;
+  --surface: #fffaf0;
+  --surface-2: #f8efd9;
+  --deep: #0d3d32;
+  --deep-2: #174f40;
+  --line: #dccca8;
+  --ink: #231d13;
+  --muted: #746a58;
+  --accent: #c9972d;
+  --accent-2: #e2bd62;
+  --accent-ink: #211907;
+  --paper: #f6efd9;
+  --paper-ink: #201b13;
+  --entry: rgba(255, 210, 64, .34);
+  --entry-border: rgba(210, 145, 15, .8);
+  --ok: #72c68c;
+  --warn: #e2b64e;
+  --bad: #e36f5d;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(circle at 16% -10%, rgba(201, 151, 45, .18), transparent 30rem),
+    radial-gradient(circle at 86% 4%, rgba(13, 61, 50, .10), transparent 28rem),
+    linear-gradient(135deg, rgba(13, 61, 50, .045) 0 1px, transparent 1px 18px),
+    var(--bg);
+  color: var(--ink);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.5;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+.app {
+  width: min(1120px, calc(100% - 28px));
+  margin: 0 auto;
+  padding: 22px 0 48px;
+}
+
+.topbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 12px 14px;
+  background: rgba(255, 250, 240, .78);
+  border: 1px solid rgba(220, 204, 168, .8);
+  border-radius: 10px;
+  box-shadow: 0 12px 34px rgba(73, 55, 17, .08);
+  backdrop-filter: blur(8px);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.appIcon {
+  flex: 0 0 auto;
+  width: 52px;
+  height: 52px;
+  border-radius: 13px;
+  box-shadow: 0 10px 24px rgba(48, 34, 9, .18), 0 0 0 1px rgba(201, 151, 45, .28);
+}
+
+h1 {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 650;
+  letter-spacing: 0;
+  color: var(--deep);
+}
+
+.topbar p,
+.hint,
+.ref,
+.stats {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.topbar p {
+  margin: 3px 0 0;
+}
+
+.stats {
+  white-space: nowrap;
+  color: var(--deep);
+  background: #f7ecd0;
+  border: 1px solid rgba(201, 151, 45, .24);
+  border-radius: 7px;
+  padding: 7px 10px;
+}
+
+.toolbar {
+  display: flex;
+  align-items: end;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 18px 0;
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 10px 26px rgba(73, 55, 17, .07);
+}
+
+.toolbar label {
+  display: grid;
+  gap: 5px;
+}
+
+.modeGroup {
+  display: inline-flex;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  overflow: hidden;
+}
+
+.modeGroup legend {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.modeGroup label {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 0 12px;
+  color: var(--muted);
+  background: #fbf2dd;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.modeGroup label + label {
+  border-left: 1px solid var(--line);
+}
+
+.modeGroup label:has(input:checked) {
+  color: #fff7df;
+  background: var(--deep);
+}
+
+.modeGroup input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.rangePanel {
+  display: flex;
+  align-items: end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.rangePanel[hidden] {
+  display: none;
+}
+
+.rangeGroup {
+  display: grid;
+  grid-template-columns: minmax(170px, 1.8fr) minmax(76px, .8fr);
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.rangeGroup legend {
+  grid-column: 1 / -1;
+  margin: 0 0 -4px;
+  padding: 0;
+  color: var(--deep);
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.toolbar span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.toolbar input[type="number"],
+.toolbar select {
+  width: 86px;
+  min-height: 38px;
+  padding: 7px 9px;
+  color: var(--ink);
+  background: #fffdf7;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+}
+
+.toolbar select {
+  width: 100%;
+  min-width: 0;
+}
+
+.switches {
+  display: flex;
+  gap: 14px;
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+
+.check {
+  display: inline-flex !important;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.quiz {
+  display: grid;
+  gap: 14px;
+}
+
+.question,
+.answer {
+  padding: 20px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 12px 32px rgba(73, 55, 17, .08);
+}
+
+.question {
+  background:
+    linear-gradient(135deg, rgba(226, 189, 98, .12), transparent 48%),
+    var(--deep);
+  border-color: rgba(201, 151, 45, .46);
+  color: #fff9e7;
+}
+
+.eyebrow {
+  color: var(--accent-2);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.prompt {
+  min-height: 86px;
+  margin: 8px 0 4px;
+  color: #fff8e8;
+  font-family: "Geeza Pro", "Noto Naskh Arabic", "Traditional Arabic", "Times New Roman", serif;
+  font-size: 34px;
+  line-height: 2.05;
+  text-align: right;
+}
+
+.question .hint {
+  color: rgba(255, 248, 232, .72);
+}
+
+.question .secondary {
+  background: rgba(255, 248, 232, .10);
+  color: #fff8e8;
+  border-color: rgba(226, 189, 98, .42);
+}
+
+.actions,
+.answerHead,
+.grade {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.actions {
+  margin-top: 16px;
+}
+
+.answerHead {
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+button {
+  min-height: 40px;
+  border: 0;
+  border-radius: 7px;
+  padding: 9px 16px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+button:disabled {
+  opacity: .5;
+  cursor: default;
+}
+
+.primary {
+  background: var(--accent);
+  color: var(--accent-ink);
+  box-shadow: 0 6px 16px rgba(103, 70, 8, .18);
+}
+
+.secondary {
+  background: #fff8e8;
+  color: var(--deep);
+  border: 1px solid rgba(201, 151, 45, .32);
+}
+
+.small {
+  min-height: 34px;
+  padding: 6px 12px;
+}
+
+#pageArea {
+  display: grid;
+  gap: 18px;
+}
+
+.pageFig {
+  margin: 0;
+  text-align: center;
+}
+
+.pageFig figcaption {
+  margin-bottom: 7px;
+  color: #8f7744;
+  direction: ltr;
+  font-size: 12px;
+}
+
+.imageWrap {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+}
+
+.mushaf {
+  display: block;
+  width: min(640px, 100%);
+  max-width: 100%;
+  border: 1px solid rgba(0, 0, 0, .22);
+  border-radius: 8px;
+  background: var(--paper);
+}
+
+.band {
+  position: absolute;
+  left: 4%;
+  right: 4%;
+  background: var(--entry);
+  border-radius: 5px;
+  outline: 2px solid var(--entry-border);
+  pointer-events: none;
+  mix-blend-mode: multiply;
+}
+
+.fallback {
+  padding: 18px;
+  background: var(--paper);
+  color: var(--paper-ink);
+  border-radius: 8px;
+  direction: rtl;
+}
+
+.fallbackText {
+  font-family: "Geeza Pro", "Noto Naskh Arabic", "Traditional Arabic", "Times New Roman", serif;
+  font-size: 27px;
+  line-height: 2.35;
+  text-align: right;
+}
+
+.verse {
+  padding: 1px 4px;
+  border-radius: 6px;
+}
+
+.verse.entry {
+  background: #ffe28a;
+  outline: 2px solid #d89a18;
+}
+
+.verse.continuation {
+  background: #fff4ce;
+}
+
+.translation {
+  display: grid;
+  gap: 7px;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.translation b {
+  color: var(--ink);
+}
+
+.grade {
+  margin-top: 16px;
+}
+
+.grade button {
+  flex: 1;
+  min-width: 130px;
+  color: #10130f;
+}
+
+.clean {
+  background: var(--ok);
+}
+
+.hesitated {
+  background: var(--warn);
+}
+
+.failed {
+  background: var(--bad);
+}
+
+@media (max-width: 640px) {
+  .app {
+    width: min(100% - 20px, 1120px);
+    padding-top: 12px;
+  }
+
+  .topbar {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  .appIcon {
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+  }
+
+  .stats {
+    white-space: normal;
+  }
+
+  .switches {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .rangePanel {
+    width: 100%;
+  }
+
+  .rangeGroup {
+    width: 100%;
+    grid-template-columns: minmax(0, 1fr) 82px;
+  }
+
+  .question,
+  .answer {
+    padding: 16px;
+  }
+
+  .prompt {
+    min-height: 74px;
+    font-size: 27px;
+  }
+}

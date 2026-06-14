@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quran Tester</title>
+  <link rel="icon" type="image/png" href="assets/app-icon.png">
+  <link rel="apple-touch-icon" href="assets/app-icon.png">
+  <link rel="stylesheet" href="styles.css">
+  <script src="data/quran-data.js"></script>
+  <script src="data/line-bands.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand">
+        <img class="appIcon" src="assets/app-icon.png" alt="" width="52" height="52">
+        <div>
+          <h1>Quran Tester</h1>
+          <p id="rangeNote">Loading local Quran data...</p>
+        </div>
+      </div>
+      <div class="stats" id="stats" aria-live="polite"></div>
+    </header>
+
+    <section class="toolbar" aria-label="Quiz settings">
+      <fieldset class="modeGroup">
+        <legend>Range</legend>
+        <label><input type="radio" name="rangeMode" value="pages" checked> Pages</label>
+        <label><input type="radio" name="rangeMode" value="ayah"> Ayah</label>
+      </fieldset>
+      <div class="rangePanel" id="pageRange">
+        <label>
+          <span>Start page</span>
+          <input type="number" id="startPage" min="1" max="604" value="1">
+        </label>
+        <label>
+          <span>Stop page</span>
+          <input type="number" id="endPage" min="1" max="604" value="10">
+        </label>
+      </div>
+      <div class="rangePanel" id="ayahRange" hidden>
+        <fieldset class="rangeGroup">
+          <legend>Start</legend>
+          <label>
+            <span>Surah</span>
+            <select id="startSurah"></select>
+          </label>
+          <label>
+            <span>Ayah</span>
+            <select id="startAyah"></select>
+          </label>
+        </fieldset>
+        <fieldset class="rangeGroup">
+          <legend>Stop</legend>
+          <label>
+            <span>Surah</span>
+            <select id="endSurah"></select>
+          </label>
+          <label>
+            <span>Ayah</span>
+            <select id="endAyah"></select>
+          </label>
+        </fieldset>
+      </div>
+      <label>
+        <span>Reveal words</span>
+        <input type="number" id="words" min="1" max="20" value="4">
+      </label>
+      <label>
+        <span>Ayat to show</span>
+        <input type="number" id="lines" min="1" max="20" value="4">
+      </label>
+      <div class="switches">
+        <label class="check"><input type="checkbox" id="highlight" checked> Highlight</label>
+        <label class="check"><input type="checkbox" id="translation"> Translation</label>
+      </div>
+    </section>
+
+    <section class="quiz">
+      <div class="question">
+        <div class="eyebrow" id="qnum">Ayah</div>
+        <div class="prompt" id="prompt" dir="rtl">...</div>
+        <div class="hint" id="hint"></div>
+        <div class="actions">
+          <button class="primary" id="revealBtn" type="button">Reveal</button>
+          <button class="secondary" id="skipBtn" type="button">Skip</button>
+        </div>
+      </div>
+
+      <div class="answer" id="answer" hidden>
+        <div class="answerHead">
+          <div class="ref" id="ref"></div>
+          <button class="secondary small" id="nextBtn" type="button">Next</button>
+        </div>
+        <div id="pageArea"></div>
+        <div class="grade" aria-label="Self grade">
+          <button class="clean" data-grade="clean" type="button">Clean</button>
+          <button class="hesitated" data-grade="hesitated" type="button">Hesitated</button>
+          <button class="failed" data-grade="failed" type="button">Failed</button>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
