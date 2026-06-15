@@ -343,6 +343,61 @@ button:disabled {
   gap: 18px;
 }
 
+.pageViewer {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  grid-template-areas:
+    "prev page next"
+    ". status .";
+  align-items: center;
+  gap: 8px;
+}
+
+.pageViewer.single .pageNav {
+  visibility: hidden;
+}
+
+.pageViewport {
+  grid-area: page;
+  min-width: 0;
+  text-align: center;
+  touch-action: pan-y;
+  user-select: none;
+}
+
+.pageNav {
+  width: 44px;
+  height: 58px;
+  padding: 0;
+  border-radius: 8px;
+  color: var(--deep);
+  background: #f7ecd0;
+  border: 1px solid rgba(201, 151, 45, .32);
+  box-shadow: 0 6px 16px rgba(73, 55, 17, .08);
+  font-size: 30px;
+  line-height: 1;
+}
+
+.pageNavPrev {
+  grid-area: prev;
+}
+
+.pageNavNext {
+  grid-area: next;
+}
+
+.pageNav:disabled {
+  opacity: .28;
+}
+
+.pageStatus {
+  grid-area: status;
+  min-height: 16px;
+  color: var(--muted);
+  font-size: 12px;
+  text-align: center;
+}
+
 .pageFig {
   margin: 0;
   text-align: center;
@@ -478,6 +533,17 @@ button:disabled {
   .rangeGroup {
     width: 100%;
     grid-template-columns: minmax(0, 1fr) 82px;
+  }
+
+  .pageViewer {
+    grid-template-columns: 36px minmax(0, 1fr) 36px;
+    gap: 6px;
+  }
+
+  .pageNav {
+    width: 36px;
+    height: 50px;
+    font-size: 26px;
   }
 
   .question,

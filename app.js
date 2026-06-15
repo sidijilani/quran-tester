@@ -39,6 +39,7 @@
   let question = null;
   let asked = 0;
   let activeMode = "pages";
+  let answerPageIndex = 0;
   const tally = { clean: 0, hesitated: 0, failed: 0 };
   const promptIndexCache = new Map();
   const surahs = [];
@@ -499,6 +500,80 @@
     return fig;
   }
 
+  function navigateAnswerPage(delta) {
+    if (!question || question.pages.length <= 1) return;
+    const nextIndex = Math.max(0, Math.min(question.pages.length - 1, answerPageIndex + delta));
+    if (nextIndex === answerPageIndex) return;
+    answerPageIndex = nextIndex;
+    renderAnswerPages();
+  }
+
+  function attachSwipeNavigation(el) {
+    let startX = 0;
+    let startY = 0;
+    let tracking = false;
+
+    el.addEventListener("pointerdown", (event) => {
+      tracking = true;
+      startX = event.clientX;
+      startY = event.clientY;
+    });
+
+    el.addEventListener("pointerup", (event) => {
+      if (!tracking) return;
+      tracking = false;
+      const dx = event.clientX - startX;
+      const dy = event.clientY - startY;
+      if (Math.abs(dx) < 48 || Math.abs(dx) < Math.abs(dy) * 1.2) return;
+      navigateAnswerPage(dx < 0 ? 1 : -1);
+    });
+
+    el.addEventListener("pointercancel", () => {
+      tracking = false;
+    });
+  }
+
+  function renderPageViewer() {
+    answerPageIndex = Math.max(0, Math.min(question.pages.length - 1, answerPageIndex));
+    const page = question.pages[answerPageIndex];
+    const viewer = document.createElement("div");
+    viewer.className = `pageViewer${question.pages.length === 1 ? " single" : ""}`;
+
+    const prev = document.createElement("button");
+    prev.className = "pageNav pageNavPrev";
+    prev.type = "button";
+    prev.textContent = "‹";
+    prev.setAttribute("aria-label", "Previous page");
+    prev.disabled = answerPageIndex === 0;
+    prev.addEventListener("click", () => navigateAnswerPage(-1));
+
+    const next = document.createElement("button");
+    next.className = "pageNav pageNavNext";
+    next.type = "button";
+    next.textContent = "›";
+    next.setAttribute("aria-label", "Next page");
+    next.disabled = answerPageIndex === question.pages.length - 1;
+    next.addEventListener("click", () => navigateAnswerPage(1));
+
+    const viewport = document.createElement("div");
+    viewport.className = "pageViewport";
+    viewport.appendChild(renderImagePage(page));
+    attachSwipeNavigation(viewport);
+
+    const status = document.createElement("div");
+    status.className = "pageStatus";
+    status.textContent = question.pages.length > 1 ? `${answerPageIndex + 1} / ${question.pages.length}` : "";
+
+    viewer.append(prev, viewport, next, status);
+    return viewer;
+  }
+
+  function renderAnswerPages() {
+    els.pageArea.textContent = "";
+    els.pageArea.appendChild(renderPageViewer());
+    if (question.cfg.translation) els.pageArea.appendChild(renderTranslation());
+  }
+
   function renderTranslation() {
     const div = document.createElement("div");
     div.className = "translation";
@@ -525,9 +600,8 @@
     const pagesTxt =
       question.entry.page === last.page ? `page ${question.entry.page}` : `pages ${question.entry.page}-${last.page}`;
     els.ref.textContent = `${question.entry.s_en} ${question.span} · ${pagesTxt}`;
-    els.pageArea.textContent = "";
-    question.pages.forEach((page) => els.pageArea.appendChild(renderImagePage(page)));
-    if (question.cfg.translation) els.pageArea.appendChild(renderTranslation());
+    answerPageIndex = Math.max(0, question.pages.indexOf(question.entry.page));
+    renderAnswerPages();
     els.answer.hidden = false;
   }
 
@@ -586,9 +660,11 @@
         event.preventDefault();
         if (!els.reveal.disabled) reveal();
       } else if (!els.answer.hidden) {
-        if (event.key === "1") grade("clean");
-        if (event.key === "2") grade("hesitated");
-        if (event.key === "3") grade("failed");
+        if (event.key === "ArrowLeft") navigateAnswerPage(-1);
+        else if (event.key === "ArrowRight") navigateAnswerPage(1);
+        else if (event.key === "1") grade("clean");
+        else if (event.key === "2") grade("hesitated");
+        else if (event.key === "3") grade("failed");
       }
     });
     loadNext();
