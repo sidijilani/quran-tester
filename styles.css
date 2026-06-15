@@ -353,10 +353,6 @@ button:disabled {
   gap: 8px;
 }
 
-.pageViewer.single .pageNav {
-  visibility: hidden;
-}
-
 .pageViewport {
   grid-area: page;
   min-width: 0;
@@ -379,11 +375,11 @@ button:disabled {
 }
 
 .pageNavPrev {
-  grid-area: prev;
+  grid-area: next;
 }
 
 .pageNavNext {
-  grid-area: next;
+  grid-area: prev;
 }
 
 .pageNav:disabled {
