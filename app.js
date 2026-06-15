@@ -47,6 +47,7 @@
   const surahs = [];
   const ayahLookup = new Map();
   const pageBounds = new Map();
+  const preloadedPages = new Set();
 
   function clamp(value, min, max) {
     const n = Number(value) || min;
@@ -443,6 +444,24 @@
     return `assets/pages/${page}.jpg`;
   }
 
+  function viewerPages() {
+    if (!question) return [];
+    return question.viewerPages.length ? question.viewerPages : question.pages;
+  }
+
+  function preloadPage(page) {
+    if (!page || preloadedPages.has(page)) return;
+    const img = new Image();
+    img.decoding = "async";
+    img.src = pagePath(page);
+    preloadedPages.add(page);
+  }
+
+  function preloadAdjacentPages(pages, index) {
+    preloadPage(pages[index - 1]);
+    preloadPage(pages[index + 1]);
+  }
+
   function bandForPage(page) {
     if (!question.cfg.highlight || page <= 2) return null;
     const byPage = lineBands[question.entry.key];
@@ -484,32 +503,52 @@
     const fig = document.createElement("figure");
     fig.className = "pageFig";
     const cap = document.createElement("figcaption");
-    cap.textContent = `Madinah mushaf · page ${page}`;
 
     const wrap = document.createElement("div");
     wrap.className = "imageWrap";
     const img = document.createElement("img");
     img.className = "mushaf";
     img.loading = "lazy";
-    img.alt = `Madinah mushaf page ${page}`;
-    img.src = pagePath(page);
-    img.onerror = () => {
-      wrap.replaceWith(fallbackPage());
-    };
 
     wrap.appendChild(img);
-    addBand(wrap, bandForPage(page));
     fig.append(cap, wrap);
+    updateImagePage(fig, page);
     return fig;
   }
 
+  function updateImagePage(fig, page) {
+    const cap = fig.querySelector("figcaption");
+    let wrap = fig.querySelector(".imageWrap");
+
+    if (!wrap) {
+      fig.querySelector(".fallback")?.remove();
+      wrap = document.createElement("div");
+      wrap.className = "imageWrap";
+      const img = document.createElement("img");
+      img.className = "mushaf";
+      img.loading = "lazy";
+      wrap.appendChild(img);
+      fig.appendChild(wrap);
+    }
+
+    const img = wrap.querySelector(".mushaf");
+    cap.textContent = `Madinah mushaf · page ${page}`;
+    wrap.querySelector(".band")?.remove();
+    img.alt = `Madinah mushaf page ${page}`;
+    img.onerror = () => {
+      wrap.replaceWith(fallbackPage());
+    };
+    img.src = pagePath(page);
+    addBand(wrap, bandForPage(page));
+  }
+
   function navigateAnswerPage(delta) {
-    const pages = question ? question.viewerPages : [];
+    const pages = viewerPages();
     if (pages.length <= 1) return;
     const nextIndex = Math.max(0, Math.min(pages.length - 1, answerPageIndex + delta));
     if (nextIndex === answerPageIndex) return;
     answerPageIndex = nextIndex;
-    renderAnswerPages();
+    updatePageViewer();
   }
 
   function attachSwipeNavigation(el) {
@@ -538,7 +577,7 @@
   }
 
   function renderPageViewer() {
-    const pages = question.viewerPages.length ? question.viewerPages : question.pages;
+    const pages = viewerPages();
     answerPageIndex = Math.max(0, Math.min(pages.length - 1, answerPageIndex));
     const page = pages[answerPageIndex];
     const viewer = document.createElement("div");
@@ -570,7 +609,23 @@
     status.textContent = pages.length > 1 ? `${answerPageIndex + 1} / ${pages.length}` : "";
 
     viewer.append(prev, viewport, next, status);
+    updatePageViewer(viewer);
     return viewer;
+  }
+
+  function updatePageViewer(viewer = els.pageArea.querySelector(".pageViewer")) {
+    if (!viewer) return;
+    const pages = viewerPages();
+    answerPageIndex = Math.max(0, Math.min(pages.length - 1, answerPageIndex));
+    const page = pages[answerPageIndex];
+
+    viewer.className = `pageViewer${pages.length === 1 ? " single" : ""}`;
+    viewer.querySelector(".pageNavPrev").disabled = answerPageIndex === 0;
+    viewer.querySelector(".pageNavNext").disabled = answerPageIndex === pages.length - 1;
+    viewer.querySelector(".pageStatus").textContent =
+      pages.length > 1 ? `${answerPageIndex + 1} / ${pages.length}` : "";
+    updateImagePage(viewer.querySelector(".pageFig"), page);
+    preloadAdjacentPages(pages, answerPageIndex);
   }
 
   function renderAnswerPages() {
@@ -605,7 +660,7 @@
     const pagesTxt =
       question.entry.page === last.page ? `page ${question.entry.page}` : `pages ${question.entry.page}-${last.page}`;
     els.ref.textContent = `${question.entry.s_en} ${question.span} · ${pagesTxt}`;
-    const pages = question.viewerPages.length ? question.viewerPages : question.pages;
+    const pages = viewerPages();
     answerPageIndex = Math.max(0, pages.indexOf(question.entry.page));
     renderAnswerPages();
     els.answer.hidden = false;
