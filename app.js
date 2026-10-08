@@ -40,8 +40,6 @@
     quizPanel: $("quizPanel"),
     hifzPanel: $("hifzPanel"),
     hifzPage: $("hifzPage"),
-    hifzPrev: $("hifzPrev"),
-    hifzNext: $("hifzNext"),
     hifzRef: $("hifzRef"),
     hifzPageArea: $("hifzPageArea"),
     hifzLegend: $("hifzLegend"),
@@ -939,8 +937,6 @@
     els.testTab.addEventListener("click", () => setActivePanel("test"));
     els.hifzTab.addEventListener("click", () => setActivePanel("hifz"));
     els.hifzPage.addEventListener("change", renderHifzPage);
-    els.hifzPrev.addEventListener("click", () => setHifzPage(hifzPage - 1));
-    els.hifzNext.addEventListener("click", () => setHifzPage(hifzPage + 1));
     hifzPage = clamp(localStorage.getItem("quran-hifz-page") || els.hifzPage.value, 1, 604);
     els.hifzPage.value = hifzPage;
     document.addEventListener("keydown", (event) => {

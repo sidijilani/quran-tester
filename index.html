@@ -23,13 +23,14 @@
           <p id="rangeNote">Loading local Quran data...</p>
         </div>
       </div>
-      <div class="stats" id="stats" aria-live="polite"></div>
+      <div class="topbarActions">
+        <nav class="appTabs" aria-label="Mode">
+          <button class="tab active" id="testTab" type="button">Test</button>
+          <button class="tab" id="hifzTab" type="button">Hifz</button>
+        </nav>
+        <div class="stats" id="stats" aria-live="polite"></div>
+      </div>
     </header>
-
-    <nav class="appTabs" aria-label="Mode">
-      <button class="tab active" id="testTab" type="button">Test</button>
-      <button class="tab" id="hifzTab" type="button">Hifz</button>
-    </nav>
 
     <div id="testPanel">
     <section class="toolbar" aria-label="Quiz settings">
@@ -113,18 +114,13 @@
     </section>
 
     <section class="hifzMode" id="hifzPanel" hidden>
-      <section class="toolbar" aria-label="Hifz settings">
-        <label>
-          <span>Page</span>
-          <input type="number" id="hifzPage" min="1" max="604" value="21">
-        </label>
-        <button class="secondary small" id="hifzPrev" type="button">Previous</button>
-        <button class="secondary small" id="hifzNext" type="button">Next</button>
-      </section>
-
       <div class="answer">
         <div class="answerHead">
           <div class="ref" id="hifzRef">Page 21</div>
+          <label class="pageJump">
+            <span>Page</span>
+            <input type="number" id="hifzPage" min="1" max="604" value="21">
+          </label>
         </div>
         <div id="hifzPageArea"></div>
         <div class="hifzLegend" id="hifzLegend"></div>
