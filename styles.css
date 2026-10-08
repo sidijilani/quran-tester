@@ -428,8 +428,6 @@ button:disabled {
 
 .band {
   position: absolute;
-  left: 4%;
-  right: 4%;
   background: var(--entry);
   border-radius: 5px;
   outline: 2px solid var(--entry-border);

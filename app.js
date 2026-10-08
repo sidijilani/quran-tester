@@ -3,6 +3,11 @@
 
   const ayat = window.QURAN_AYAT || [];
   const lineBands = window.QURAN_LINE_BANDS || {};
+  const ayahLayoutPages = window.QURAN_AYAH_LAYOUT_PAGES || (window.QURAN_AYAH_LAYOUT_PAGES = {});
+  const ayahLayoutData = window.QURAN_AYAH_LAYOUT || {};
+  const ayahLayoutManifest = window.QURAN_AYAH_LAYOUT_MANIFEST || {};
+  const ayahLayout = ayahLayoutData.ayat || {};
+  const pageLayouts = ayahLayoutData.pages || {};
   const totalPages = ayat.reduce((max, ayah) => Math.max(max, ayah.page || 0), 0);
   const mushafPages = Array.from({ length: totalPages }, (_, index) => index + 1);
   const topFrac = 0.085;
@@ -44,6 +49,7 @@
   let answerPageIndex = 0;
   const tally = { clean: 0, hesitated: 0, failed: 0 };
   const promptIndexCache = new Map();
+  const layoutPageLoads = new Map();
   const surahs = [];
   const ayahLookup = new Map();
   const pageBounds = new Map();
@@ -462,21 +468,59 @@
     preloadPage(pages[index + 1]);
   }
 
-  function bandForPage(page) {
-    if (!question.cfg.highlight || page <= 2) return null;
-    const byPage = lineBands[question.entry.key];
-    return byPage ? byPage[String(page)] : null;
+  function layoutForPage(page) {
+    const key = String(page);
+    const pagePayload = ayahLayoutPages[key];
+    return pagePayload ? pagePayload.page : pageLayouts[key] || (ayahLayoutManifest.pages || {})[key];
   }
 
-  function addBand(wrap, range) {
-    if (!range) return;
+  function loadLayoutPage(page) {
+    const key = String(page);
+    if (ayahLayoutPages[key] || pageLayouts[key]) return Promise.resolve();
+    if (layoutPageLoads.has(key)) return layoutPageLoads.get(key);
+
+    const promise = new Promise((resolve) => {
+      const script = document.createElement("script");
+      script.src = `data/ayah-layout-pages/${page}.js`;
+      script.async = true;
+      script.onload = () => resolve();
+      script.onerror = () => resolve();
+      document.head.appendChild(script);
+    });
+    layoutPageLoads.set(key, promise);
+    return promise;
+  }
+
+  function highlightBoxesForPage(page) {
+    if (!question.cfg.highlight) return [];
+    const pagePayload = ayahLayoutPages[String(page)];
+    const pageBoxes = pagePayload ? pagePayload.ayat[question.entry.key] : null;
+    if (pageBoxes && pageBoxes.length) return pageBoxes;
+
+    const layoutByPage = ayahLayout[question.entry.key];
+    const boxes = layoutByPage ? layoutByPage[String(page)] : null;
+    if (boxes && boxes.length) return boxes;
+
+    const bandByPage = lineBands[question.entry.key];
+    const range = bandByPage ? bandByPage[String(page)] : null;
+    if (!range || page <= 2) return [];
     const top = topFrac + (range[0] - 1) * lineH;
     const bottom = topFrac + range[1] * lineH;
+    return [{ x: 0.04, y: top, w: 0.92, h: bottom - top }];
+  }
+
+  function addBand(wrap, box) {
     const band = document.createElement("div");
     band.className = "band";
-    band.style.top = `${(top * 100).toFixed(2)}%`;
-    band.style.height = `${((bottom - top) * 100).toFixed(2)}%`;
+    band.style.left = `${(box.x * 100).toFixed(2)}%`;
+    band.style.top = `${(box.y * 100).toFixed(2)}%`;
+    band.style.width = `${(box.w * 100).toFixed(2)}%`;
+    band.style.height = `${(box.h * 100).toFixed(2)}%`;
     wrap.appendChild(band);
+  }
+
+  function addBands(wrap, boxes) {
+    boxes.forEach((box) => addBand(wrap, box));
   }
 
   function highlightClass(key) {
@@ -517,6 +561,7 @@
   }
 
   function updateImagePage(fig, page) {
+    fig.dataset.page = String(page);
     const cap = fig.querySelector("figcaption");
     let wrap = fig.querySelector(".imageWrap");
 
@@ -532,14 +577,24 @@
     }
 
     const img = wrap.querySelector(".mushaf");
+    const pageLayout = layoutForPage(page);
     cap.textContent = `Madinah mushaf · page ${page}`;
-    wrap.querySelector(".band")?.remove();
+    if (pageLayout) {
+      wrap.style.aspectRatio = `${pageLayout.w} / ${pageLayout.h}`;
+    }
+    wrap.querySelectorAll(".band").forEach((band) => band.remove());
     img.alt = `Madinah mushaf page ${page}`;
     img.onerror = () => {
       wrap.replaceWith(fallbackPage());
     };
     img.src = pagePath(page);
-    addBand(wrap, bandForPage(page));
+    addBands(wrap, highlightBoxesForPage(page));
+    loadLayoutPage(page).then(() => {
+      if (fig.dataset.page === String(page)) {
+        wrap.querySelectorAll(".band").forEach((band) => band.remove());
+        addBands(wrap, highlightBoxesForPage(page));
+      }
+    });
   }
 
   function navigateAnswerPage(delta) {
@@ -656,6 +711,7 @@
   function reveal() {
     if (!question) return;
     els.reveal.disabled = true;
+    loadLayoutPage(question.entry.page);
     const last = question.chunk[question.chunk.length - 1];
     const pagesTxt =
       question.entry.page === last.page ? `page ${question.entry.page}` : `pages ${question.entry.page}-${last.page}`;

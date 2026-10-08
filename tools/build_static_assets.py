@@ -167,6 +167,11 @@ def build_images() -> None:
     print("Wrote 604 page images to assets/pages/")
 
 
+def build_ayah_layout() -> None:
+    print("Building ayah layout map...")
+    subprocess.check_call(["uv", "run", "tools/build_ayah_layout.py", "--progress"], cwd=ROOT)
+
+
 def main() -> None:
     os.chdir(ROOT)
     DATA_DIR.mkdir(parents=True, exist_ok=True)
@@ -174,6 +179,7 @@ def main() -> None:
     build_quran_data()
     build_line_bands()
     build_images()
+    build_ayah_layout()
     print("Static asset build complete.")
 
 
