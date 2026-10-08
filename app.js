@@ -4,8 +4,10 @@
   const ayat = window.QURAN_AYAT || [];
   const lineBands = window.QURAN_LINE_BANDS || {};
   const ayahLayoutPages = window.QURAN_AYAH_LAYOUT_PAGES || (window.QURAN_AYAH_LAYOUT_PAGES = {});
+  const hifzChunkPages = window.QURAN_HIFZ_CHUNK_PAGES || (window.QURAN_HIFZ_CHUNK_PAGES = {});
   const ayahLayoutData = window.QURAN_AYAH_LAYOUT || {};
   const ayahLayoutManifest = window.QURAN_AYAH_LAYOUT_MANIFEST || {};
+  const hifzManifest = window.QURAN_HIFZ_CHUNKS_MANIFEST || {};
   const ayahLayout = ayahLayoutData.ayat || {};
   const pageLayouts = ayahLayoutData.pages || {};
   const totalPages = ayat.reduce((max, ayah) => Math.max(max, ayah.page || 0), 0);
@@ -32,6 +34,17 @@
     translation: $("translation"),
     rangeNote: $("rangeNote"),
     stats: $("stats"),
+    testTab: $("testTab"),
+    hifzTab: $("hifzTab"),
+    testPanel: $("testPanel"),
+    quizPanel: $("quizPanel"),
+    hifzPanel: $("hifzPanel"),
+    hifzPage: $("hifzPage"),
+    hifzPrev: $("hifzPrev"),
+    hifzNext: $("hifzNext"),
+    hifzRef: $("hifzRef"),
+    hifzPageArea: $("hifzPageArea"),
+    hifzLegend: $("hifzLegend"),
     qnum: $("qnum"),
     prompt: $("prompt"),
     hint: $("hint"),
@@ -50,10 +63,23 @@
   const tally = { clean: 0, hesitated: 0, failed: 0 };
   const promptIndexCache = new Map();
   const layoutPageLoads = new Map();
+  const hifzPageLoads = new Map();
   const surahs = [];
   const ayahLookup = new Map();
   const pageBounds = new Map();
   const preloadedPages = new Set();
+  const hifzColorSlots = new Map();
+  let nextHifzColorSlot = 0;
+  let activePanel = "test";
+  let hifzPage = 21;
+  const hifzPalette = [
+    { fill: "rgba(227, 82, 61, .17)", border: "rgba(189, 55, 38, .50)" },
+    { fill: "rgba(32, 150, 120, .17)", border: "rgba(20, 113, 92, .50)" },
+    { fill: "rgba(62, 123, 220, .16)", border: "rgba(42, 90, 176, .48)" },
+    { fill: "rgba(156, 91, 204, .16)", border: "rgba(125, 66, 168, .48)" },
+    { fill: "rgba(218, 151, 32, .17)", border: "rgba(176, 112, 14, .48)" },
+    { fill: "rgba(26, 152, 190, .16)", border: "rgba(15, 114, 150, .48)" },
+  ];
 
   function clamp(value, min, max) {
     const n = Number(value) || min;
@@ -491,6 +517,23 @@
     return promise;
   }
 
+  function loadHifzPage(page) {
+    const key = String(page);
+    if (hifzChunkPages[key]) return Promise.resolve();
+    if (hifzPageLoads.has(key)) return hifzPageLoads.get(key);
+
+    const promise = new Promise((resolve) => {
+      const script = document.createElement("script");
+      script.src = `data/hifz-chunks-pages/${page}.js`;
+      script.async = true;
+      script.onload = () => resolve();
+      script.onerror = () => resolve();
+      document.head.appendChild(script);
+    });
+    hifzPageLoads.set(key, promise);
+    return promise;
+  }
+
   function highlightBoxesForPage(page) {
     if (!question.cfg.highlight) return [];
     const pagePayload = ayahLayoutPages[String(page)];
@@ -511,11 +554,13 @@
 
   function addBand(wrap, box) {
     const band = document.createElement("div");
-    band.className = "band";
+    band.className = box.className || "band";
     band.style.left = `${(box.x * 100).toFixed(2)}%`;
     band.style.top = `${(box.y * 100).toFixed(2)}%`;
     band.style.width = `${(box.w * 100).toFixed(2)}%`;
     band.style.height = `${(box.h * 100).toFixed(2)}%`;
+    if (box.fill) band.style.background = box.fill;
+    if (box.border) band.style.outlineColor = box.border;
     wrap.appendChild(band);
   }
 
@@ -528,12 +573,52 @@
     return question.chunk.some((ayah) => ayah.key === key) ? "continuation" : "";
   }
 
+  function hifzBoxesForPage(page) {
+    const hifz = hifzChunkPages[String(page)];
+    const layout = ayahLayoutPages[String(page)];
+    if (!hifz || !layout) return [];
+    const boxes = [];
+    hifz.chunks.forEach((chunk) => {
+      const color = hifzColorForChunk(chunk);
+      chunk.visibleAyat.forEach((ayahKeyValue) => {
+        (layout.ayat[ayahKeyValue] || []).forEach((box) => {
+          boxes.push({
+            ...box,
+            className: "band hifzBand",
+            fill: color.fill,
+            border: color.border,
+          });
+        });
+      });
+    });
+    return boxes;
+  }
+
+  function hifzColorForChunk(chunk) {
+    const key = chunk.colorKey || chunk.verses;
+    if (!hifzColorSlots.has(key)) {
+      hifzColorSlots.set(key, nextHifzColorSlot);
+      nextHifzColorSlot = (nextHifzColorSlot + 1) % hifzPalette.length;
+    }
+    return hifzPalette[hifzColorSlots.get(key)];
+  }
+
+  function overlayBoxesForPage(page, mode) {
+    return mode === "hifz" ? hifzBoxesForPage(page) : highlightBoxesForPage(page);
+  }
+
   function fallbackPage() {
     const div = document.createElement("div");
     div.className = "fallback";
     const text = document.createElement("div");
     text.className = "fallbackText";
-    question.chunk.forEach((ayah) => {
+    const fallbackAyat = question ? question.chunk : [];
+    if (!fallbackAyat.length) {
+      text.textContent = "Page image unavailable.";
+      div.appendChild(text);
+      return div;
+    }
+    fallbackAyat.forEach((ayah) => {
       const span = document.createElement("span");
       span.className = `verse ${highlightClass(ayah.key)}`;
       span.textContent = `${ayah.ar} `;
@@ -543,9 +628,10 @@
     return div;
   }
 
-  function renderImagePage(page) {
+  function renderImagePage(page, mode = "test") {
     const fig = document.createElement("figure");
     fig.className = "pageFig";
+    fig.dataset.mode = mode;
     const cap = document.createElement("figcaption");
 
     const wrap = document.createElement("div");
@@ -556,12 +642,13 @@
 
     wrap.appendChild(img);
     fig.append(cap, wrap);
-    updateImagePage(fig, page);
+    updateImagePage(fig, page, mode);
     return fig;
   }
 
-  function updateImagePage(fig, page) {
+  function updateImagePage(fig, page, mode = fig.dataset.mode || "test") {
     fig.dataset.page = String(page);
+    fig.dataset.mode = mode;
     const cap = fig.querySelector("figcaption");
     let wrap = fig.querySelector(".imageWrap");
 
@@ -588,11 +675,13 @@
       wrap.replaceWith(fallbackPage());
     };
     img.src = pagePath(page);
-    addBands(wrap, highlightBoxesForPage(page));
-    loadLayoutPage(page).then(() => {
+    addBands(wrap, overlayBoxesForPage(page, mode));
+    const loads = mode === "hifz" ? [loadLayoutPage(page), loadHifzPage(page)] : [loadLayoutPage(page)];
+    Promise.all(loads).then(() => {
       if (fig.dataset.page === String(page)) {
         wrap.querySelectorAll(".band").forEach((band) => band.remove());
-        addBands(wrap, highlightBoxesForPage(page));
+        addBands(wrap, overlayBoxesForPage(page, mode));
+        if (mode === "hifz") renderHifzLegend();
       }
     });
   }
@@ -681,6 +770,81 @@
       pages.length > 1 ? `${answerPageIndex + 1} / ${pages.length}` : "";
     updateImagePage(viewer.querySelector(".pageFig"), page);
     preloadAdjacentPages(pages, answerPageIndex);
+  }
+
+  function renderHifzLegend() {
+    const data = hifzChunkPages[String(hifzPage)];
+    const manifestPage = (hifzManifest.pages || {})[String(hifzPage)];
+    els.hifzLegend.textContent = "";
+    els.hifzRef.textContent = data
+      ? `Page ${hifzPage} · ${data.range} · ${data.chunks.length} chunks`
+      : `Page ${hifzPage}${manifestPage ? ` · ${manifestPage.range}` : ""}`;
+    if (!data) return;
+
+    data.chunks.forEach((chunk) => {
+      const item = document.createElement("div");
+      item.className = "hifzLegendItem";
+      const color = hifzColorForChunk(chunk);
+      const swatch = document.createElement("span");
+      swatch.className = "hifzSwatch";
+      swatch.style.background = color.fill;
+      swatch.style.borderColor = color.border;
+      const text = document.createElement("span");
+      text.textContent = `${chunk.verses} · ${chunk.lines} lines`;
+      item.append(swatch, text);
+      els.hifzLegend.appendChild(item);
+    });
+  }
+
+  function renderHifzPage() {
+    hifzPage = clamp(els.hifzPage.value, 1, 604);
+    els.hifzPage.value = hifzPage;
+    localStorage.setItem("quran-hifz-page", String(hifzPage));
+    els.hifzPageArea.textContent = "";
+    const viewer = document.createElement("div");
+    viewer.className = "pageViewer single";
+    const prev = document.createElement("button");
+    prev.className = "pageNav pageNavPrev";
+    prev.type = "button";
+    prev.textContent = "›";
+    prev.setAttribute("aria-label", "Previous page");
+    prev.disabled = hifzPage <= 1;
+    prev.addEventListener("click", () => setHifzPage(hifzPage - 1));
+    const next = document.createElement("button");
+    next.className = "pageNav pageNavNext";
+    next.type = "button";
+    next.textContent = "‹";
+    next.setAttribute("aria-label", "Next page");
+    next.disabled = hifzPage >= 604;
+    next.addEventListener("click", () => setHifzPage(hifzPage + 1));
+    const viewport = document.createElement("div");
+    viewport.className = "pageViewport";
+    viewport.appendChild(renderImagePage(hifzPage, "hifz"));
+    const status = document.createElement("div");
+    status.className = "pageStatus";
+    status.textContent = `page ${hifzPage}`;
+    viewer.append(prev, viewport, next, status);
+    els.hifzPageArea.appendChild(viewer);
+    renderHifzLegend();
+    preloadAdjacentPages(mushafPages, hifzPage - 1);
+  }
+
+  function setHifzPage(page) {
+    hifzPage = clamp(page, 1, 604);
+    els.hifzPage.value = hifzPage;
+    renderHifzPage();
+  }
+
+  function setActivePanel(mode) {
+    activePanel = mode === "hifz" ? "hifz" : "test";
+    els.testTab.classList.toggle("active", activePanel === "test");
+    els.hifzTab.classList.toggle("active", activePanel === "hifz");
+    els.testPanel.hidden = activePanel !== "test";
+    els.quizPanel.hidden = activePanel !== "test";
+    els.hifzPanel.hidden = activePanel !== "hifz";
+    els.stats.hidden = activePanel === "hifz";
+    els.rangeNote.hidden = activePanel === "hifz";
+    if (activePanel === "hifz") renderHifzPage();
   }
 
   function renderAnswerPages() {
@@ -772,8 +936,18 @@
     });
     [els.startAyah, els.endAyah, els.words, els.lines].forEach((input) => input.addEventListener("change", loadNext));
     [els.highlight, els.translation].forEach((input) => input.addEventListener("change", rerenderAnswer));
+    els.testTab.addEventListener("click", () => setActivePanel("test"));
+    els.hifzTab.addEventListener("click", () => setActivePanel("hifz"));
+    els.hifzPage.addEventListener("change", renderHifzPage);
+    els.hifzPrev.addEventListener("click", () => setHifzPage(hifzPage - 1));
+    els.hifzNext.addEventListener("click", () => setHifzPage(hifzPage + 1));
+    hifzPage = clamp(localStorage.getItem("quran-hifz-page") || els.hifzPage.value, 1, 604);
+    els.hifzPage.value = hifzPage;
     document.addEventListener("keydown", (event) => {
-      if (event.key === " " && els.answer.hidden) {
+      if (activePanel === "hifz") {
+        if (event.key === "ArrowLeft") setHifzPage(hifzPage + 1);
+        else if (event.key === "ArrowRight") setHifzPage(hifzPage - 1);
+      } else if (event.key === " " && els.answer.hidden) {
         event.preventDefault();
         if (!els.reveal.disabled) reveal();
       } else if (!els.answer.hidden) {

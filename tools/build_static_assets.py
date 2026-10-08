@@ -172,6 +172,11 @@ def build_ayah_layout() -> None:
     subprocess.check_call(["uv", "run", "tools/build_ayah_layout.py", "--progress"], cwd=ROOT)
 
 
+def build_hifz_chunks() -> None:
+    print("Building Hifz chunk map...")
+    subprocess.check_call(["python3", "tools/build_hifz_chunks.py", "--progress"], cwd=ROOT)
+
+
 def main() -> None:
     os.chdir(ROOT)
     DATA_DIR.mkdir(parents=True, exist_ok=True)
@@ -180,6 +185,7 @@ def main() -> None:
     build_line_bands()
     build_images()
     build_ayah_layout()
+    build_hifz_chunks()
     print("Static asset build complete.")
 
 

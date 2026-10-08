@@ -10,6 +10,7 @@
   <script src="data/quran-data.js"></script>
   <script src="data/line-bands.js"></script>
   <script src="data/ayah-layout-manifest.js"></script>
+  <script src="data/hifz-chunks-manifest.js"></script>
   <script defer src="app.js"></script>
 </head>
 <body>
@@ -25,6 +26,12 @@
       <div class="stats" id="stats" aria-live="polite"></div>
     </header>
 
+    <nav class="appTabs" aria-label="Mode">
+      <button class="tab active" id="testTab" type="button">Test</button>
+      <button class="tab" id="hifzTab" type="button">Hifz</button>
+    </nav>
+
+    <div id="testPanel">
     <section class="toolbar" aria-label="Quiz settings">
       <fieldset class="modeGroup">
         <legend>Range</legend>
@@ -78,8 +85,9 @@
         <label class="check"><input type="checkbox" id="translation"> Translation</label>
       </div>
     </section>
+    </div>
 
-    <section class="quiz">
+    <section class="quiz" id="quizPanel">
       <div class="question">
         <div class="eyebrow" id="qnum">Ayah</div>
         <div class="prompt" id="prompt" dir="rtl">...</div>
@@ -101,6 +109,25 @@
           <button class="hesitated" data-grade="hesitated" type="button">Hesitated</button>
           <button class="failed" data-grade="failed" type="button">Failed</button>
         </div>
+      </div>
+    </section>
+
+    <section class="hifzMode" id="hifzPanel" hidden>
+      <section class="toolbar" aria-label="Hifz settings">
+        <label>
+          <span>Page</span>
+          <input type="number" id="hifzPage" min="1" max="604" value="21">
+        </label>
+        <button class="secondary small" id="hifzPrev" type="button">Previous</button>
+        <button class="secondary small" id="hifzNext" type="button">Next</button>
+      </section>
+
+      <div class="answer">
+        <div class="answerHead">
+          <div class="ref" id="hifzRef">Page 21</div>
+        </div>
+        <div id="hifzPageArea"></div>
+        <div class="hifzLegend" id="hifzLegend"></div>
       </div>
     </section>
   </main>

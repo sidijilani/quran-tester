@@ -23,6 +23,10 @@
   box-sizing: border-box;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 body {
   margin: 0;
   background:
@@ -102,6 +106,33 @@ h1 {
   border: 1px solid rgba(201, 151, 45, .24);
   border-radius: 7px;
   padding: 7px 10px;
+}
+
+.appTabs {
+  display: inline-flex;
+  margin: 18px 0 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fbf2dd;
+}
+
+.tab {
+  min-height: 38px;
+  border-radius: 0;
+  color: var(--muted);
+  background: transparent;
+  border-right: 1px solid var(--line);
+  box-shadow: none;
+}
+
+.tab:last-child {
+  border-right: 0;
+}
+
+.tab.active {
+  color: #fff7df;
+  background: var(--deep);
 }
 
 .toolbar {
@@ -433,6 +464,37 @@ button:disabled {
   outline: 2px solid var(--entry-border);
   pointer-events: none;
   mix-blend-mode: multiply;
+}
+
+.hifzBand {
+  border-radius: 4px;
+  outline-width: 1px;
+}
+
+.hifzLegend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.hifzLegendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 8px;
+  color: var(--muted);
+  background: #fff8e8;
+  border: 1px solid rgba(201, 151, 45, .24);
+  border-radius: 7px;
+  font-size: 12px;
+}
+
+.hifzSwatch {
+  width: 15px;
+  height: 15px;
+  border: 2px solid;
+  border-radius: 4px;
 }
 
 .fallback {
