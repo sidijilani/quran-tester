@@ -11,6 +11,7 @@
   <script src="data/line-bands.js"></script>
   <script src="data/ayah-layout-manifest.js"></script>
   <script src="data/hifz-chunks-manifest.js"></script>
+  <script src="data/mutashabihat-manifest.js"></script>
   <script defer src="app.js"></script>
 </head>
 <body>
@@ -27,6 +28,7 @@
         <nav class="appTabs" aria-label="Mode">
           <button class="tab active" id="testTab" type="button">Test</button>
           <button class="tab" id="hifzTab" type="button">Hifz</button>
+          <button class="tab" id="mutashabihatTab" type="button">Mutashabihat</button>
         </nav>
         <div class="stats" id="stats" aria-live="polite"></div>
       </div>
@@ -124,6 +126,27 @@
         </div>
         <div id="hifzPageArea"></div>
         <div class="hifzLegend" id="hifzLegend"></div>
+      </div>
+    </section>
+
+    <section class="mutashabihatMode" id="mutashabihatPanel" hidden>
+      <div class="answer">
+        <div class="answerHead">
+          <div class="ref" id="mutashabihatRef">Page 21</div>
+          <label class="pageJump">
+            <span>Page</span>
+            <input type="number" id="mutashabihatPage" min="1" max="604" value="21">
+          </label>
+          <label class="sensitivityControl">
+            <span>Sensitivity</span>
+            <input type="range" id="mutashabihatSensitivity" min="1" max="5" value="3">
+            <output id="mutashabihatSensitivityValue" for="mutashabihatSensitivity">Balanced</output>
+          </label>
+        </div>
+        <div class="mutashabihatLayout">
+          <div id="mutashabihatPageArea"></div>
+          <div class="mutashabihatOverlay" id="mutashabihatOverlay" hidden></div>
+        </div>
       </div>
     </section>
   </main>

@@ -1,0 +1,1 @@
+window.QURAN_MUTASHABIHAT_PAGES=window.QURAN_MUTASHABIHAT_PAGES||{};window.QURAN_MUTASHABIHAT_PAGES["60"]={"page":60,"matches":[]};

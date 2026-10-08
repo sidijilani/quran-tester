@@ -127,6 +127,7 @@ h1 {
 .tab {
   min-height: 36px;
   min-width: 70px;
+  padding: 7px 14px;
   border-radius: 0;
   color: var(--muted);
   background: transparent;
@@ -367,6 +368,32 @@ h1 {
   border-radius: 7px;
 }
 
+.sensitivityControl {
+  display: grid;
+  grid-template-columns: auto 130px minmax(70px, auto);
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.sensitivityControl input[type="range"] {
+  width: 130px;
+  accent-color: var(--deep);
+}
+
+.sensitivityControl output {
+  min-width: 70px;
+  color: var(--deep);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
 button {
   min-height: 40px;
   border: 0;
@@ -488,6 +515,7 @@ button:disabled {
 
 .band {
   position: absolute;
+  z-index: 2;
   background: var(--entry);
   border-radius: 5px;
   outline: 2px solid var(--entry-border);
@@ -498,6 +526,178 @@ button:disabled {
 .hifzBand {
   border-radius: 4px;
   outline-width: 1px;
+}
+
+.mutashabihBand {
+  background: transparent;
+  outline: 0;
+  border-radius: 3px;
+  box-shadow: none;
+  cursor: pointer;
+  pointer-events: auto;
+  mix-blend-mode: multiply;
+}
+
+.mutashabihPhraseBand {
+  box-shadow: inset 0 -3px 0 rgba(219, 166, 57, .42);
+}
+
+.mutashabihPhraseBand.selected {
+  background: rgba(255, 224, 118, .08);
+  box-shadow: inset 0 -3px 0 rgba(210, 145, 33, .62);
+}
+
+.mutashabihDiffBand {
+  border-radius: 2px;
+  box-shadow: inset 0 -5px 0 rgba(194, 86, 24, .86);
+}
+
+.mutashabihDiffBand.selected {
+  background: transparent;
+  box-shadow: inset 0 -5px 0 rgba(183, 72, 22, .95);
+}
+
+.mutashabihBandPrevious {
+  background: transparent;
+}
+
+.mutashabihBandPrevious.mutashabihPhraseBand {
+  box-shadow: inset 0 -3px 0 rgba(45, 134, 174, .58);
+}
+
+.mutashabihBandPrevious.mutashabihDiffBand {
+  box-shadow: inset 0 -5px 0 rgba(31, 113, 153, .88);
+}
+
+.mutashabihatLayout {
+  position: relative;
+}
+
+#mutashabihatPageArea {
+  min-width: 0;
+}
+
+.mutashabihatOverlay {
+  position: fixed;
+  z-index: 20;
+  top: 158px;
+  right: max(18px, calc((100vw - 1120px) / 2 + 18px));
+  display: grid;
+  gap: 12px;
+  width: min(430px, calc(100vw - 36px));
+  max-height: calc(100vh - 190px);
+  overflow: auto;
+  padding: 12px;
+  color: var(--muted);
+  font-size: 12px;
+  background: rgba(255, 250, 240, .96);
+  border: 1px solid rgba(201, 151, 45, .34);
+  border-radius: 8px;
+  box-shadow: 0 22px 60px rgba(73, 55, 17, .24);
+  backdrop-filter: blur(10px);
+}
+
+.mutashabihatOverlayHead {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.mutashabihatOverlayTitle {
+  color: var(--deep);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.mutashabihatOverlayNote {
+  margin-top: 3px;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.overlayClose {
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0;
+  color: var(--deep);
+  background: #fff8e8;
+  border: 1px solid rgba(201, 151, 45, .30);
+  border-radius: 7px;
+  box-shadow: none;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.compareText {
+  display: grid;
+  gap: 8px;
+}
+
+.comparePhrase {
+  padding: 8px 10px;
+  color: #5f4a1b;
+  background: rgba(255, 239, 184, .56);
+  border: 1px solid rgba(201, 151, 45, .24);
+  border-radius: 7px;
+  font-family: "Geeza Pro", "Noto Naskh Arabic", "Traditional Arabic", "Times New Roman", serif;
+  font-size: 18px;
+  line-height: 1.8;
+  text-align: right;
+}
+
+.compareLine {
+  padding: 10px;
+  background: rgba(255, 248, 232, .62);
+  border: 1px solid rgba(201, 151, 45, .20);
+  border-radius: 7px;
+}
+
+.compareLabel {
+  margin-bottom: 5px;
+  color: #8f7744;
+  direction: ltr;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.compareArabic {
+  color: var(--ink);
+  direction: rtl;
+  font-family: "Geeza Pro", "Noto Naskh Arabic", "Traditional Arabic", "Times New Roman", serif;
+  font-size: 20px;
+  line-height: 2;
+  text-align: right;
+}
+
+.diffWord {
+  padding: 0 2px 2px;
+  border-radius: 4px;
+}
+
+.diffWord.diff {
+  color: #3c2e13;
+  text-decoration-line: underline;
+  text-decoration-color: rgba(196, 98, 22, .88);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: .18em;
+}
+
+.diffWord.same {
+  background: rgba(255, 216, 74, .16);
+  box-shadow: inset 0 -1px 0 rgba(202, 126, 24, .22);
+}
+
+.comparePage .imageWrap {
+  width: min(320px, 100%);
+}
+
+.emptyState {
+  padding: 14px;
+  color: var(--muted);
+  background: rgba(255, 248, 232, .62);
+  border: 1px solid rgba(201, 151, 45, .20);
+  border-radius: 7px;
 }
 
 .hifzLegend {
@@ -619,6 +819,8 @@ button:disabled {
 
   .tab {
     min-width: 66px;
+    padding-right: 11px;
+    padding-left: 11px;
   }
 
   .answerHead {
@@ -659,5 +861,18 @@ button:disabled {
   .prompt {
     min-height: 74px;
     font-size: 27px;
+  }
+
+  .mutashabihatOverlay {
+    top: auto;
+    right: 10px;
+    bottom: 10px;
+    left: 10px;
+    width: auto;
+    max-height: min(76vh, 680px);
+  }
+
+  .comparePage .imageWrap {
+    width: min(290px, 100%);
   }
 }

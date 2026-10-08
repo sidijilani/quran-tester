@@ -5,9 +5,11 @@
   const lineBands = window.QURAN_LINE_BANDS || {};
   const ayahLayoutPages = window.QURAN_AYAH_LAYOUT_PAGES || (window.QURAN_AYAH_LAYOUT_PAGES = {});
   const hifzChunkPages = window.QURAN_HIFZ_CHUNK_PAGES || (window.QURAN_HIFZ_CHUNK_PAGES = {});
+  const mutashabihatPages = window.QURAN_MUTASHABIHAT_PAGES || (window.QURAN_MUTASHABIHAT_PAGES = {});
   const ayahLayoutData = window.QURAN_AYAH_LAYOUT || {};
   const ayahLayoutManifest = window.QURAN_AYAH_LAYOUT_MANIFEST || {};
   const hifzManifest = window.QURAN_HIFZ_CHUNKS_MANIFEST || {};
+  const mutashabihatManifest = window.QURAN_MUTASHABIHAT_MANIFEST || {};
   const ayahLayout = ayahLayoutData.ayat || {};
   const pageLayouts = ayahLayoutData.pages || {};
   const totalPages = ayat.reduce((max, ayah) => Math.max(max, ayah.page || 0), 0);
@@ -36,6 +38,7 @@
     stats: $("stats"),
     testTab: $("testTab"),
     hifzTab: $("hifzTab"),
+    mutashabihatTab: $("mutashabihatTab"),
     testPanel: $("testPanel"),
     quizPanel: $("quizPanel"),
     hifzPanel: $("hifzPanel"),
@@ -43,6 +46,13 @@
     hifzRef: $("hifzRef"),
     hifzPageArea: $("hifzPageArea"),
     hifzLegend: $("hifzLegend"),
+    mutashabihatPanel: $("mutashabihatPanel"),
+    mutashabihatPage: $("mutashabihatPage"),
+    mutashabihatSensitivity: $("mutashabihatSensitivity"),
+    mutashabihatSensitivityValue: $("mutashabihatSensitivityValue"),
+    mutashabihatRef: $("mutashabihatRef"),
+    mutashabihatPageArea: $("mutashabihatPageArea"),
+    mutashabihatOverlay: $("mutashabihatOverlay"),
     qnum: $("qnum"),
     prompt: $("prompt"),
     hint: $("hint"),
@@ -62,6 +72,7 @@
   const promptIndexCache = new Map();
   const layoutPageLoads = new Map();
   const hifzPageLoads = new Map();
+  const mutashabihatPageLoads = new Map();
   const surahs = [];
   const ayahLookup = new Map();
   const pageBounds = new Map();
@@ -70,6 +81,16 @@
   let nextHifzColorSlot = 0;
   let activePanel = "test";
   let hifzPage = 21;
+  let mutashabihatPage = 21;
+  let mutashabihatSensitivity = 3;
+  let selectedMutashabihatMatchId = null;
+  const mutashabihatSensitivityProfiles = [
+    { label: "Exact", maxRepeat: 3, minWords: 6, minCoverage: 0.7 },
+    { label: "Focused", maxRepeat: 5, minWords: 5, minCoverage: 0.6 },
+    { label: "Balanced", maxRepeat: 5, minWords: 4, minCoverage: 0.5 },
+    { label: "Sensitive", maxRepeat: 8, minWords: 4, minCoverage: 0.45 },
+    { label: "Broad", maxRepeat: 13, minWords: 3, minCoverage: 0.35 },
+  ];
   const hifzPalette = [
     { fill: "rgba(227, 82, 61, .17)", border: "rgba(189, 55, 38, .50)" },
     { fill: "rgba(32, 150, 120, .17)", border: "rgba(20, 113, 92, .50)" },
@@ -532,6 +553,21 @@
     return promise;
   }
 
+  function loadMutashabihatPage(page) {
+    const key = String(page);
+    if (mutashabihatPages[key]) return Promise.resolve();
+    if (mutashabihatPageLoads.has(key)) return mutashabihatPageLoads.get(key);
+    const promise = new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = `data/mutashabihat-pages/${page}.js`;
+      script.onload = () => resolve();
+      script.onerror = reject;
+      document.head.appendChild(script);
+    });
+    mutashabihatPageLoads.set(key, promise);
+    return promise;
+  }
+
   function highlightBoxesForPage(page) {
     if (!question.cfg.highlight) return [];
     const pagePayload = ayahLayoutPages[String(page)];
@@ -559,11 +595,47 @@
     band.style.height = `${(box.h * 100).toFixed(2)}%`;
     if (box.fill) band.style.background = box.fill;
     if (box.border) band.style.outlineColor = box.border;
+    if (box.matchId) {
+      band.dataset.matchId = box.matchId;
+      band.title = box.title || "";
+      let hoverTimer = null;
+      band.addEventListener("pointerenter", (event) => {
+        if (event.pointerType !== "mouse") return;
+        hoverTimer = window.setTimeout(() => selectMutashabihatMatch(box.matchId), 350);
+      });
+      band.addEventListener("pointerleave", () => {
+        if (hoverTimer) window.clearTimeout(hoverTimer);
+      });
+      band.addEventListener("click", () => selectMutashabihatMatch(box.matchId));
+      band.addEventListener("pointerdown", () => selectMutashabihatMatch(box.matchId));
+      band.tabIndex = 0;
+      band.setAttribute("role", "button");
+      band.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          selectMutashabihatMatch(box.matchId);
+        }
+      });
+    }
     wrap.appendChild(band);
   }
 
   function addBands(wrap, boxes) {
     boxes.forEach((box) => addBand(wrap, box));
+  }
+
+  function selectBandAtPoint(wrap, event) {
+    const bands = Array.from(wrap.querySelectorAll(".mutashabihBand[data-match-id]"));
+    const band = bands.find((candidate) => {
+      const rect = candidate.getBoundingClientRect();
+      return (
+        event.clientX >= rect.left &&
+        event.clientX <= rect.right &&
+        event.clientY >= rect.top &&
+        event.clientY <= rect.bottom
+      );
+    });
+    if (band) selectMutashabihatMatch(band.dataset.matchId);
   }
 
   function highlightClass(key) {
@@ -601,8 +673,160 @@
     return hifzPalette[hifzColorSlots.get(key)];
   }
 
+  function mutashabihatSensitivityProfile() {
+    return mutashabihatSensitivityProfiles[mutashabihatSensitivity - 1] || mutashabihatSensitivityProfiles[2];
+  }
+
+  function updateMutashabihatSensitivityLabel() {
+    const profile = mutashabihatSensitivityProfile();
+    els.mutashabihatSensitivity.value = String(mutashabihatSensitivity);
+    els.mutashabihatSensitivityValue.textContent = profile.label;
+  }
+
+  function mutashabihatMatchPassesSensitivity(match) {
+    const profile = mutashabihatSensitivityProfile();
+    const repeatCount = match.repeatCount || Number((match.note || "").match(/(\d+) repeats/)?.[1]) || 99;
+    const wordCount = match.wordCount || Number((match.note || "").match(/(\d+) words/)?.[1]) || 0;
+    const coverage = match.ayahCoverage || 0;
+    return repeatCount <= profile.maxRepeat && (wordCount >= profile.minWords || coverage >= profile.minCoverage);
+  }
+
+  function mutashabihatMatchesForPage(page) {
+    return ((mutashabihatPages[String(page)] || {}).matches || []).filter(mutashabihatMatchPassesSensitivity);
+  }
+
+  function rawMutashabihatMatchCount(page) {
+    return ((mutashabihatPages[String(page)] || {}).matches || []).length;
+  }
+
+  function mutashabihatMatchById(id) {
+    return mutashabihatMatchesForPage(mutashabihatPage).find((match) => match.id === id) || null;
+  }
+
+  function indexedAyahWordCount(ayahKeyValue) {
+    const [surah, ayah] = ayahKeyValue.split(":").map(Number);
+    const entry = getAyah(surah, ayah);
+    return entry ? normalizedWords(entry).length : 0;
+  }
+
+  function lineWordSpans(boxes, wordCount) {
+    if (!wordCount || !boxes.length) return [];
+    const weights = boxes.map((box) => Math.max(1, box.w || 0));
+    const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
+    let remaining = wordCount;
+    let cursor = 1;
+    return boxes.map((box, index) => {
+      const remainingLines = boxes.length - index;
+      const estimate = Math.round((weights[index] / totalWeight) * wordCount);
+      const count = index === boxes.length - 1 ? remaining : Math.max(1, Math.min(remaining - remainingLines + 1, estimate));
+      const span = { box, start: cursor, end: cursor + count - 1 };
+      cursor += count;
+      remaining -= count;
+      return span;
+    });
+  }
+
+  function rangesFromDiffParts(ranges, parts) {
+    const positions = [];
+    (ranges || []).forEach(([start, end]) => {
+      for (let position = Number(start); position <= Number(end); position += 1) {
+        positions.push(position);
+      }
+    });
+    const diffPositions = positions.filter((_, index) => parts[index]?.kind === "diff");
+    const packed = [];
+    diffPositions.forEach((position) => {
+      const last = packed[packed.length - 1];
+      if (last && last[1] === position - 1) last[1] = position;
+      else packed.push([position, position]);
+    });
+    return packed;
+  }
+
+  function rangeBoxesForAyah(layout, ayahKeyValue, ranges, role) {
+    const ayahBoxes = layout.ayat[ayahKeyValue] || [];
+    if (!ranges || !ranges.length || !ayahBoxes.length) return [];
+    const hasWordSpans = ayahBoxes.every((box) => Number.isFinite(Number(box.s)) && Number.isFinite(Number(box.e)));
+    const spans = hasWordSpans
+      ? ayahBoxes.map((box) => ({ box, start: Number(box.s), end: Number(box.e) }))
+      : lineWordSpans(ayahBoxes, indexedAyahWordCount(ayahKeyValue));
+    const boxes = [];
+    spans.forEach(({ box, start, end }) => {
+      ranges.forEach(([rangeStart, rangeEnd]) => {
+        const overlapStart = Math.max(start, rangeStart);
+        const overlapEnd = Math.min(end, rangeEnd);
+        if (overlapStart > overlapEnd) return;
+        const lineCount = end - start + 1;
+        const from = (overlapStart - start) / lineCount;
+        const to = (overlapEnd - start + 1) / lineCount;
+        boxes.push({
+          ...box,
+          x: box.x + box.w * (1 - to),
+          w: Math.max(role === "diff" ? 0.018 : 0.035, box.w * (to - from)),
+          role,
+        });
+      });
+    });
+    return boxes;
+  }
+
+  function mutashabihatBoxesForPage(page) {
+    const data = mutashabihatPages[String(page)];
+    const layout = ayahLayoutPages[String(page)];
+    if (!data || !layout) return [];
+    const boxes = [];
+    mutashabihatMatchesForPage(page).forEach((match) => {
+      (match.currentAyat || [match.current]).forEach((ayahKeyValue) => {
+        const phraseBoxes = rangeBoxesForAyah(layout, ayahKeyValue, match.currentRanges, "phrase");
+        const diffRanges = rangesFromDiffParts(match.currentRanges, match.currentPhraseDiff || []);
+        const diffBoxes = rangeBoxesForAyah(layout, ayahKeyValue, diffRanges, "diff");
+        phraseBoxes.forEach((box) => {
+          boxes.push({
+            ...box,
+            className: `band mutashabihBand mutashabihPhraseBand${match.id === selectedMutashabihatMatchId ? " selected" : ""}`,
+            matchId: match.id,
+            title: `${match.current} similar to ${match.previous}${match.phraseText ? ` · ${match.phraseText}` : ""}`,
+          });
+        });
+        diffBoxes.forEach((box) => {
+          boxes.push({
+            ...box,
+            className: `band mutashabihBand mutashabihDiffBand${match.id === selectedMutashabihatMatchId ? " selected" : ""}`,
+            matchId: match.id,
+            title: `${match.current} differs from ${match.previous}`,
+          });
+        });
+      });
+    });
+    return boxes;
+  }
+
+  function mutashabihatPreviousBoxesForPage(page) {
+    const match = mutashabihatMatchById(selectedMutashabihatMatchId);
+    const layout = ayahLayoutPages[String(page)];
+    if (!match || !layout || match.previousPage !== page) return [];
+    return (match.previousAyat || [match.previous]).flatMap((ayahKeyValue) => {
+      const phraseBoxes = rangeBoxesForAyah(layout, ayahKeyValue, match.previousRanges, "phrase");
+      const diffRanges = rangesFromDiffParts(match.previousRanges, match.previousPhraseDiff || []);
+      const diffBoxes = rangeBoxesForAyah(layout, ayahKeyValue, diffRanges, "diff");
+      return [
+        ...phraseBoxes.map((box) => ({
+          ...box,
+          className: "band mutashabihBand mutashabihPhraseBand mutashabihBandPrevious selected",
+        })),
+        ...diffBoxes.map((box) => ({
+          ...box,
+          className: "band mutashabihBand mutashabihDiffBand mutashabihBandPrevious selected",
+        })),
+      ];
+    });
+  }
+
   function overlayBoxesForPage(page, mode) {
-    return mode === "hifz" ? hifzBoxesForPage(page) : highlightBoxesForPage(page);
+    if (mode === "hifz") return hifzBoxesForPage(page);
+    if (mode === "mutashabihat") return mutashabihatBoxesForPage(page);
+    if (mode === "mutashabihatPrevious") return mutashabihatPreviousBoxesForPage(page);
+    return highlightBoxesForPage(page);
   }
 
   function fallbackPage() {
@@ -674,12 +898,17 @@
     };
     img.src = pagePath(page);
     addBands(wrap, overlayBoxesForPage(page, mode));
-    const loads = mode === "hifz" ? [loadLayoutPage(page), loadHifzPage(page)] : [loadLayoutPage(page)];
+    wrap.onclick = mode === "mutashabihat" ? (event) => selectBandAtPoint(wrap, event) : null;
+    wrap.onpointerdown = mode === "mutashabihat" ? (event) => selectBandAtPoint(wrap, event) : null;
+    const loads = [loadLayoutPage(page)];
+    if (mode === "hifz") loads.push(loadHifzPage(page));
+    if (mode === "mutashabihat") loads.push(loadMutashabihatPage(page));
     Promise.all(loads).then(() => {
       if (fig.dataset.page === String(page)) {
         wrap.querySelectorAll(".band").forEach((band) => band.remove());
         addBands(wrap, overlayBoxesForPage(page, mode));
         if (mode === "hifz") renderHifzLegend();
+        if (mode === "mutashabihat") renderMutashabihatDetails();
       }
     });
   }
@@ -833,16 +1062,175 @@
     renderHifzPage();
   }
 
+  function renderMutashabihatPage() {
+    mutashabihatPage = clamp(els.mutashabihatPage.value, 1, 604);
+    els.mutashabihatPage.value = mutashabihatPage;
+    localStorage.setItem("quran-mutashabihat-page", String(mutashabihatPage));
+    selectedMutashabihatMatchId = null;
+    els.mutashabihatOverlay.hidden = true;
+    els.mutashabihatOverlay.textContent = "";
+    const manifestPage = (mutashabihatManifest.pages || {})[String(mutashabihatPage)];
+    els.mutashabihatRef.textContent = `Page ${mutashabihatPage} · ${manifestPage ? manifestPage.matches : 0} possible links`;
+    els.mutashabihatPageArea.textContent = "";
+    const viewer = document.createElement("div");
+    viewer.className = "pageViewer single";
+    const prev = document.createElement("button");
+    prev.className = "pageNav pageNavPrev";
+    prev.type = "button";
+    prev.textContent = "›";
+    prev.setAttribute("aria-label", "Previous page");
+    prev.disabled = mutashabihatPage <= 1;
+    prev.addEventListener("click", () => setMutashabihatPage(mutashabihatPage - 1));
+    const next = document.createElement("button");
+    next.className = "pageNav pageNavNext";
+    next.type = "button";
+    next.textContent = "‹";
+    next.setAttribute("aria-label", "Next page");
+    next.disabled = mutashabihatPage >= 604;
+    next.addEventListener("click", () => setMutashabihatPage(mutashabihatPage + 1));
+    const viewport = document.createElement("div");
+    viewport.className = "pageViewport";
+    viewport.appendChild(renderImagePage(mutashabihatPage, "mutashabihat"));
+    const status = document.createElement("div");
+    status.className = "pageStatus";
+    status.textContent = `page ${mutashabihatPage}`;
+    viewer.append(prev, viewport, next, status);
+    els.mutashabihatPageArea.appendChild(viewer);
+    preloadAdjacentPages(mushafPages, mutashabihatPage - 1);
+  }
+
+  function setMutashabihatPage(page) {
+    mutashabihatPage = clamp(page, 1, 604);
+    els.mutashabihatPage.value = mutashabihatPage;
+    renderMutashabihatPage();
+  }
+
+  function selectMutashabihatMatch(id) {
+    if (selectedMutashabihatMatchId === id && !els.mutashabihatOverlay.hidden) return;
+    selectedMutashabihatMatchId = id;
+    renderMutashabihatDetails();
+    const fig = els.mutashabihatPageArea.querySelector(".pageFig");
+    if (fig) updateImagePage(fig, mutashabihatPage, "mutashabihat");
+  }
+
+  function closeMutashabihatOverlay() {
+    if (!selectedMutashabihatMatchId && els.mutashabihatOverlay.hidden) return;
+    selectedMutashabihatMatchId = null;
+    els.mutashabihatOverlay.hidden = true;
+    els.mutashabihatOverlay.textContent = "";
+    const fig = els.mutashabihatPageArea.querySelector(".pageFig");
+    if (fig) updateImagePage(fig, mutashabihatPage, "mutashabihat");
+  }
+
+  function handleMutashabihatOutsidePointerDown(event) {
+    if (activePanel !== "mutashabihat" || els.mutashabihatOverlay.hidden) return;
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    if (els.mutashabihatOverlay.contains(target)) return;
+    if (target.closest(".mutashabihBand[data-match-id]")) return;
+    closeMutashabihatOverlay();
+  }
+
+  function renderDiffWords(container, parts) {
+    container.textContent = "";
+    parts.forEach((part, index) => {
+      if (index) container.append(" ");
+      const span = document.createElement("span");
+      span.className = `diffWord ${part.kind}`;
+      span.textContent = part.text;
+      container.appendChild(span);
+    });
+  }
+
+  function renderCompareLine(label, parts) {
+    const line = document.createElement("div");
+    line.className = "compareLine";
+    const labelEl = document.createElement("div");
+    labelEl.className = "compareLabel";
+    labelEl.textContent = label;
+    const arabic = document.createElement("div");
+    arabic.className = "compareArabic";
+    renderDiffWords(arabic, parts);
+    line.append(labelEl, arabic);
+    return line;
+  }
+
+  function renderMutashabihatDetails() {
+    const matches = mutashabihatMatchesForPage(mutashabihatPage);
+    const rawCount = rawMutashabihatMatchCount(mutashabihatPage);
+    const suffix = rawCount && rawCount !== matches.length ? `${matches.length}/${rawCount}` : matches.length;
+    els.mutashabihatRef.textContent = `Page ${mutashabihatPage} · ${suffix} earlier links`;
+    const match = mutashabihatMatchById(selectedMutashabihatMatchId);
+    if (!match) {
+      els.mutashabihatOverlay.hidden = true;
+      els.mutashabihatOverlay.textContent = "";
+      return;
+    }
+    els.mutashabihatOverlay.textContent = "";
+    els.mutashabihatOverlay.hidden = false;
+    const head = document.createElement("div");
+    head.className = "mutashabihatOverlayHead";
+    const titleWrap = document.createElement("div");
+    const title = document.createElement("div");
+    title.className = "mutashabihatOverlayTitle";
+    title.textContent = `${match.current} vs ${match.previous}`;
+    const note = document.createElement("div");
+    note.className = "mutashabihatOverlayNote";
+    note.textContent = match.note || "Similar wording";
+    titleWrap.append(title, note);
+    const close = document.createElement("button");
+    close.className = "overlayClose";
+    close.type = "button";
+    close.textContent = "×";
+    close.setAttribute("aria-label", "Close comparison");
+    close.addEventListener("click", closeMutashabihatOverlay);
+    head.append(titleWrap, close);
+    const text = document.createElement("div");
+    text.className = "compareText";
+    if (match.phraseText) {
+      const phrase = document.createElement("div");
+      phrase.className = "comparePhrase";
+      phrase.dir = "rtl";
+      phrase.textContent = match.phraseText;
+      text.appendChild(phrase);
+    }
+    const previousParts = match.previousPhraseDiff || match.previousDiff || [];
+    const currentParts = match.currentPhraseDiff || match.currentDiff || [];
+    text.append(
+      renderCompareLine(`Earlier phrase · ${match.previous} · page ${match.previousPage}`, previousParts),
+      renderCompareLine(`Current phrase · ${match.current} · page ${match.currentPage}`, currentParts)
+    );
+    const page = document.createElement("div");
+    page.className = "comparePage";
+    page.appendChild(renderImagePage(match.previousPage, "mutashabihatPrevious"));
+    els.mutashabihatOverlay.append(head, text, page);
+  }
+
+  function updateMutashabihatSensitivity() {
+    mutashabihatSensitivity = clamp(els.mutashabihatSensitivity.value, 1, 5);
+    localStorage.setItem("quran-mutashabihat-sensitivity", String(mutashabihatSensitivity));
+    updateMutashabihatSensitivityLabel();
+    selectedMutashabihatMatchId = null;
+    els.mutashabihatOverlay.hidden = true;
+    els.mutashabihatOverlay.textContent = "";
+    const fig = els.mutashabihatPageArea.querySelector(".pageFig");
+    if (fig) updateImagePage(fig, mutashabihatPage, "mutashabihat");
+    renderMutashabihatDetails();
+  }
+
   function setActivePanel(mode) {
-    activePanel = mode === "hifz" ? "hifz" : "test";
+    activePanel = mode === "hifz" || mode === "mutashabihat" ? mode : "test";
     els.testTab.classList.toggle("active", activePanel === "test");
     els.hifzTab.classList.toggle("active", activePanel === "hifz");
+    els.mutashabihatTab.classList.toggle("active", activePanel === "mutashabihat");
     els.testPanel.hidden = activePanel !== "test";
     els.quizPanel.hidden = activePanel !== "test";
     els.hifzPanel.hidden = activePanel !== "hifz";
-    els.stats.hidden = activePanel === "hifz";
-    els.rangeNote.hidden = activePanel === "hifz";
+    els.mutashabihatPanel.hidden = activePanel !== "mutashabihat";
+    els.stats.hidden = activePanel !== "test";
+    els.rangeNote.hidden = activePanel !== "test";
     if (activePanel === "hifz") renderHifzPage();
+    if (activePanel === "mutashabihat") renderMutashabihatPage();
   }
 
   function renderAnswerPages() {
@@ -936,13 +1324,28 @@
     [els.highlight, els.translation].forEach((input) => input.addEventListener("change", rerenderAnswer));
     els.testTab.addEventListener("click", () => setActivePanel("test"));
     els.hifzTab.addEventListener("click", () => setActivePanel("hifz"));
+    els.mutashabihatTab.addEventListener("click", () => setActivePanel("mutashabihat"));
     els.hifzPage.addEventListener("change", renderHifzPage);
+    els.mutashabihatPage.addEventListener("change", renderMutashabihatPage);
+    els.mutashabihatSensitivity.addEventListener("input", updateMutashabihatSensitivity);
+    document.addEventListener("pointerdown", handleMutashabihatOutsidePointerDown, true);
     hifzPage = clamp(localStorage.getItem("quran-hifz-page") || els.hifzPage.value, 1, 604);
     els.hifzPage.value = hifzPage;
+    mutashabihatPage = clamp(localStorage.getItem("quran-mutashabihat-page") || els.mutashabihatPage.value, 1, 604);
+    els.mutashabihatPage.value = mutashabihatPage;
+    mutashabihatSensitivity = clamp(
+      localStorage.getItem("quran-mutashabihat-sensitivity") || els.mutashabihatSensitivity.value,
+      1,
+      5
+    );
+    updateMutashabihatSensitivityLabel();
     document.addEventListener("keydown", (event) => {
       if (activePanel === "hifz") {
         if (event.key === "ArrowLeft") setHifzPage(hifzPage + 1);
         else if (event.key === "ArrowRight") setHifzPage(hifzPage - 1);
+      } else if (activePanel === "mutashabihat") {
+        if (event.key === "ArrowLeft") setMutashabihatPage(mutashabihatPage + 1);
+        else if (event.key === "ArrowRight") setMutashabihatPage(mutashabihatPage - 1);
       } else if (event.key === " " && els.answer.hidden) {
         event.preventDefault();
         if (!els.reveal.disabled) reveal();

@@ -177,6 +177,11 @@ def build_hifz_chunks() -> None:
     subprocess.check_call(["python3", "tools/build_hifz_chunks.py", "--progress"], cwd=ROOT)
 
 
+def build_mutashabihat() -> None:
+    print("Building mutashabihat map...")
+    subprocess.check_call(["uv", "run", "tools/build_mutashabihat.py", "--progress"], cwd=ROOT)
+
+
 def main() -> None:
     os.chdir(ROOT)
     DATA_DIR.mkdir(parents=True, exist_ok=True)
@@ -186,6 +191,7 @@ def main() -> None:
     build_images()
     build_ayah_layout()
     build_hifz_chunks()
+    build_mutashabihat()
     print("Static asset build complete.")
 
 

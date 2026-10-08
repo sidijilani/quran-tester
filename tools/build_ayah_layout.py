@@ -210,6 +210,7 @@ def tokens_for_page(page: int) -> list[dict[str, Any]]:
                 {
                     "ayah": verse_key,
                     "line": int(line_number),
+                    "position": int(word.get("position") or 0),
                     "type": word.get("char_type_name") or "word",
                     "text": word.get("text_uthmani") or word.get("text") or "",
                 }
@@ -237,12 +238,15 @@ def segment_line(
     x1, y1, x2, y2 = line_box["px"]
     line_width = max(1, x2 - x1)
     ranges: dict[str, list[int]] = {}
+    word_positions: dict[str, list[int]] = defaultdict(list)
     for index, token in enumerate(line_tokens):
         ayah = token["ayah"]
         if ayah not in ranges:
             ranges[ayah] = [index, index]
         else:
             ranges[ayah][1] = index
+        if token.get("type") == "word" and token.get("position"):
+            word_positions[ayah].append(int(token["position"]))
 
     boxes_by_ayah: dict[str, list[dict[str, Any]]] = defaultdict(list)
     weights = [token_weight(token) for token in line_tokens]
@@ -258,6 +262,9 @@ def segment_line(
         box = norm_box(left, y1, right, y2, width, height)
         box["l"] = line_number
         box["p"] = page
+        if word_positions.get(ayah):
+            box["s"] = min(word_positions[ayah])
+            box["e"] = max(word_positions[ayah])
         boxes_by_ayah[ayah].append(box)
     return boxes_by_ayah
 
