@@ -743,6 +743,18 @@
     return packed;
   }
 
+  function underlineBox(box) {
+    const y = Number(box.y) || 0;
+    const h = Number(box.h) || 0;
+    const lineBottom = Number.isFinite(Number(box.lineBottom)) ? Number(box.lineBottom) : y + h;
+    const underlineH = Math.max(0.004, h * 0.075);
+    return {
+      ...box,
+      y: Math.min(lineBottom - underlineH, y + h + 0.0015),
+      h: underlineH,
+    };
+  }
+
   function rangeBoxesForAyah(layout, ayahKeyValue, ranges, role) {
     const ayahBoxes = layout.ayat[ayahKeyValue] || [];
     if (!ranges || !ranges.length || !ayahBoxes.length) return [];
@@ -756,15 +768,44 @@
         const overlapStart = Math.max(start, rangeStart);
         const overlapEnd = Math.min(end, rangeEnd);
         if (overlapStart > overlapEnd) return;
+        const wordBoxes = (box.words || []).filter((wordBox) => {
+          const index = Number(wordBox.i);
+          return Number.isFinite(index) && index >= overlapStart && index <= overlapEnd;
+        });
+        if (wordBoxes.length) {
+          if (role === "diff") {
+            wordBoxes.forEach((wordBox) => {
+              boxes.push(underlineBox({
+                ...box,
+                ...wordBox,
+                lineBottom: box.y + box.h,
+                w: Math.max(0.014, Number(wordBox.w) || 0),
+                role,
+              }));
+            });
+            return;
+          }
+          const left = Math.min(...wordBoxes.map((wordBox) => Number(wordBox.x)));
+          const right = Math.max(...wordBoxes.map((wordBox) => Number(wordBox.x) + Number(wordBox.w)));
+          boxes.push({
+            ...box,
+            x: left,
+            w: Math.max(0.026, right - left),
+            role,
+          });
+          return;
+        }
         const lineCount = end - start + 1;
         const from = (overlapStart - start) / lineCount;
         const to = (overlapEnd - start + 1) / lineCount;
-        boxes.push({
+        const rangeBox = {
           ...box,
           x: box.x + box.w * (1 - to),
+          lineBottom: box.y + box.h,
           w: Math.max(role === "diff" ? 0.018 : 0.035, box.w * (to - from)),
           role,
-        });
+        };
+        boxes.push(role === "diff" ? underlineBox(rangeBox) : rangeBox);
       });
     });
     return boxes;
@@ -783,7 +824,7 @@
         phraseBoxes.forEach((box) => {
           boxes.push({
             ...box,
-            className: `band mutashabihBand mutashabihPhraseBand${match.id === selectedMutashabihatMatchId ? " selected" : ""}`,
+            className: `band mutashabihBand mutashabihSimilarBand${match.id === selectedMutashabihatMatchId ? " selected" : ""}`,
             matchId: match.id,
             title: `${match.current} similar to ${match.previous}${match.phraseText ? ` · ${match.phraseText}` : ""}`,
           });
@@ -812,7 +853,7 @@
       return [
         ...phraseBoxes.map((box) => ({
           ...box,
-          className: "band mutashabihBand mutashabihPhraseBand mutashabihBandPrevious selected",
+          className: "band mutashabihBand mutashabihSimilarBand mutashabihBandPrevious selected",
         })),
         ...diffBoxes.map((box) => ({
           ...box,

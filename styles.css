@@ -538,35 +538,41 @@ button:disabled {
   mix-blend-mode: multiply;
 }
 
-.mutashabihPhraseBand {
-  box-shadow: inset 0 -3px 0 rgba(219, 166, 57, .42);
+.mutashabihSimilarBand {
+  z-index: 2;
+  background: rgba(255, 210, 64, .24);
+  outline: 1px solid rgba(210, 145, 15, .46);
 }
 
-.mutashabihPhraseBand.selected {
-  background: rgba(255, 224, 118, .08);
-  box-shadow: inset 0 -3px 0 rgba(210, 145, 33, .62);
+.mutashabihSimilarBand.selected {
+  background: rgba(255, 210, 64, .34);
+  outline-color: rgba(210, 145, 15, .72);
 }
 
 .mutashabihDiffBand {
-  border-radius: 2px;
-  box-shadow: inset 0 -5px 0 rgba(194, 86, 24, .86);
+  z-index: 3;
+  background: rgba(190, 30, 45, .88);
+  border-radius: 999px;
+  box-shadow: 0 1px 1px rgba(80, 18, 18, .18);
 }
 
 .mutashabihDiffBand.selected {
-  background: transparent;
-  box-shadow: inset 0 -5px 0 rgba(183, 72, 22, .95);
+  background: rgba(174, 22, 38, .96);
+  box-shadow: 0 1px 1px rgba(80, 18, 18, .22);
 }
 
 .mutashabihBandPrevious {
   background: transparent;
 }
 
-.mutashabihBandPrevious.mutashabihPhraseBand {
-  box-shadow: inset 0 -3px 0 rgba(45, 134, 174, .58);
+.mutashabihBandPrevious.mutashabihSimilarBand {
+  background: rgba(188, 226, 238, .28);
+  outline-color: rgba(37, 116, 148, .56);
 }
 
 .mutashabihBandPrevious.mutashabihDiffBand {
-  box-shadow: inset 0 -5px 0 rgba(31, 113, 153, .88);
+  background: rgba(174, 22, 38, .88);
+  box-shadow: 0 1px 1px rgba(80, 18, 18, .18);
 }
 
 .mutashabihatLayout {
@@ -676,9 +682,9 @@ button:disabled {
 }
 
 .diffWord.diff {
-  color: #3c2e13;
+  color: #7b1020;
   text-decoration-line: underline;
-  text-decoration-color: rgba(196, 98, 22, .88);
+  text-decoration-color: rgba(174, 22, 38, .9);
   text-decoration-thickness: 1.5px;
   text-underline-offset: .18em;
 }

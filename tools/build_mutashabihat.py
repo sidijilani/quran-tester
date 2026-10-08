@@ -18,12 +18,14 @@ per mushaf page so the browser only loads the current page's relations.
 from __future__ import annotations
 
 import argparse
+import difflib
 import hashlib
 import json
 import re
 import time
 import urllib.request
 import zipfile
+from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
 
@@ -46,6 +48,13 @@ BROAD_MIN_WORDS = 3
 SCRAPE_MIN_WORDS = 2
 BROAD_MAX_REPEAT_COUNT = 13
 BROAD_MIN_AYAH_COVERAGE = 0.35
+LOCAL_SCAN_NGRAM = 3
+LOCAL_SCAN_MAX_ANCHOR_REPEAT = 12
+LOCAL_SCAN_MIN_MATCHED_WORDS = 5
+LOCAL_SCAN_LONG_BLOCK_MIN_WORDS = 5
+LOCAL_SCAN_CONTEXT_WORDS = 3
+LOCAL_SCAN_MIN_RATIO = 0.55
+LOCAL_SCAN_MAX_SPAN_WORDS = 22
 REQUEST_PAUSE_SECONDS = 0.08
 HEADERS = {"User-Agent": "quran-test-mutashabihat/1.0"}
 
@@ -144,6 +153,32 @@ def phrase_text_for_ranges(ref: str, ranges: list[list[int]], by_ref: dict[str, 
     return " ".join(selected)
 
 
+def ayah_indexed_tokens(ayah: dict[str, Any]) -> list[dict[str, Any]]:
+    tokens: list[dict[str, Any]] = []
+    source_index = 0
+    for display_word in words(ayah["ar"]):
+        norm = normalize_word(display_word)
+        if not norm:
+            continue
+        source_index += 1
+        tokens.append({"text": display_word, "norm": norm, "pos": source_index})
+    return tokens
+
+
+def contiguous_range_from_tokens(tokens: list[dict[str, Any]], start: int, end: int) -> list[list[int]]:
+    if start >= end or start < 0 or end > len(tokens):
+        return []
+    return [[int(tokens[start]["pos"]), int(tokens[end - 1]["pos"])]]
+
+
+def relation_ranges_overlap(left: list[list[int]], right: list[list[int]]) -> bool:
+    for left_start, left_end in left:
+        for right_start, right_end in right:
+            if max(left_start, right_start) <= min(left_end, right_end):
+                return True
+    return False
+
+
 def diff_words(
     left: str,
     right: str,
@@ -156,30 +191,29 @@ def diff_words(
     right_selected = selected_display_indices(right_words, right_ranges) if right_ranges is not None else set(range(1, len(right_words) + 1))
     left_norm = [normalize_word(word) for word in left_words]
     right_norm = [normalize_word(word) for word in right_words]
-    right_lookup: dict[str, int] = {}
-    for index in right_selected:
-        if 0 <= index - 1 < len(right_norm):
-            right_lookup[right_norm[index - 1]] = right_lookup.get(right_norm[index - 1], 0) + 1
+    left_indexed = [(index, left_norm[index - 1]) for index in sorted(left_selected) if 0 <= index - 1 < len(left_norm)]
+    right_indexed = [(index, right_norm[index - 1]) for index in sorted(right_selected) if 0 <= index - 1 < len(right_norm)]
+    matcher = difflib.SequenceMatcher(
+        None,
+        [norm for _, norm in left_indexed],
+        [norm for _, norm in right_indexed],
+        autojunk=False,
+    )
+    left_same: set[int] = set()
+    right_same: set[int] = set()
+    for left_start, right_start, size in matcher.get_matching_blocks():
+        for offset in range(size):
+            left_same.add(left_indexed[left_start + offset][0])
+            right_same.add(right_indexed[right_start + offset][0])
 
-    left_out: list[dict[str, str]] = []
-    right_out: list[dict[str, str]] = []
-    for index, word in enumerate(left_words, start=1):
-        norm = left_norm[index - 1]
-        shared = index in left_selected and right_lookup.get(norm, 0) > 0
-        if shared:
-            right_lookup[norm] -= 1
-        left_out.append({"text": word, "kind": "same" if shared else "diff"})
-
-    left_lookup: dict[str, int] = {}
-    for index in left_selected:
-        if 0 <= index - 1 < len(left_norm):
-            left_lookup[left_norm[index - 1]] = left_lookup.get(left_norm[index - 1], 0) + 1
-    for index, word in enumerate(right_words, start=1):
-        norm = right_norm[index - 1]
-        shared = index in right_selected and left_lookup.get(norm, 0) > 0
-        if shared:
-            left_lookup[norm] -= 1
-        right_out.append({"text": word, "kind": "same" if shared else "diff"})
+    left_out = [
+        {"text": word, "kind": "same" if index in left_same else "diff"}
+        for index, word in enumerate(left_words, start=1)
+    ]
+    right_out = [
+        {"text": word, "kind": "same" if index in right_same else "diff"}
+        for index, word in enumerate(right_words, start=1)
+    ]
 
     return left_out, right_out
 
@@ -413,6 +447,205 @@ def iter_relations(
     return relations
 
 
+def build_local_near_match_relations(
+    ayat: list[dict[str, Any]],
+    by_ref: dict[str, dict[str, Any]],
+    index_by_ref: dict[str, int],
+) -> list[dict[str, Any]]:
+    """Find hifz-style near matches that share anchors but differ in between.
+
+    QUL's phrase data is excellent for exact repeated phrases, but many
+    mutashabihat are similar frames with small connective changes. This scanner
+    starts from repeated 3-word anchors, then keeps ayah pairs whose ordered
+    matching blocks form a compact phrase-like span. A single long shared block
+    with a different continuation is also kept, because those "same opening,
+    different landing" cases are common hifz traps.
+    """
+
+    tokens_by_ref = {ref_key(ayah["s"], ayah["a"]): ayah_indexed_tokens(ayah) for ayah in ayat}
+    ngram_occurrences: dict[tuple[str, ...], list[tuple[str, int]]] = defaultdict(list)
+    for ref, tokens in tokens_by_ref.items():
+        norms = [token["norm"] for token in tokens]
+        seen_in_ayah: set[tuple[str, ...]] = set()
+        for start in range(0, len(norms) - LOCAL_SCAN_NGRAM + 1):
+            key = tuple(norms[start : start + LOCAL_SCAN_NGRAM])
+            if key in seen_in_ayah:
+                continue
+            seen_in_ayah.add(key)
+            ngram_occurrences[key].append((ref, start))
+
+    rare_occurrences = {
+        key: occurrences
+        for key, occurrences in ngram_occurrences.items()
+        if 2 <= len({ref for ref, _ in occurrences}) <= LOCAL_SCAN_MAX_ANCHOR_REPEAT
+    }
+    anchor_counts = {key: len({ref for ref, _ in occurrences}) for key, occurrences in rare_occurrences.items()}
+
+    pair_anchor_counts: Counter[tuple[str, str]] = Counter()
+    for occurrences in rare_occurrences.values():
+        refs = sorted({ref for ref, _ in occurrences}, key=lambda ref: index_by_ref[ref])
+        for right_index, current_ref in enumerate(refs):
+            for previous_ref in refs[:right_index]:
+                pair_anchor_counts[(previous_ref, current_ref)] += 1
+
+    relations: list[dict[str, Any]] = []
+    for (previous_ref, current_ref), anchor_count in pair_anchor_counts.items():
+        if anchor_count < 2:
+            continue
+        previous_tokens = tokens_by_ref[previous_ref]
+        current_tokens = tokens_by_ref[current_ref]
+        previous_norms = [token["norm"] for token in previous_tokens]
+        current_norms = [token["norm"] for token in current_tokens]
+        matcher = difflib.SequenceMatcher(None, previous_norms, current_norms, autojunk=False)
+        blocks = [block for block in matcher.get_matching_blocks() if block.size >= LOCAL_SCAN_NGRAM]
+        best: dict[str, Any] | None = None
+        for block in blocks:
+            if block.size < LOCAL_SCAN_LONG_BLOCK_MIN_WORDS:
+                continue
+            previous_start = block.a
+            current_start = block.b
+            previous_end = block.a + block.size
+            current_end = block.b + block.size
+            previous_has_after = previous_end < len(previous_tokens)
+            current_has_after = current_end < len(current_tokens)
+            previous_has_before = previous_start > 0
+            current_has_before = current_start > 0
+            if previous_has_after and current_has_after:
+                previous_end = min(len(previous_tokens), previous_end + LOCAL_SCAN_CONTEXT_WORDS)
+                current_end = min(len(current_tokens), current_end + LOCAL_SCAN_CONTEXT_WORDS)
+            elif previous_has_before and current_has_before:
+                previous_start = max(0, previous_start - LOCAL_SCAN_CONTEXT_WORDS)
+                current_start = max(0, current_start - LOCAL_SCAN_CONTEXT_WORDS)
+            else:
+                continue
+
+            previous_span = previous_end - previous_start
+            current_span = current_end - current_start
+            if previous_span > LOCAL_SCAN_MAX_SPAN_WORDS or current_span > LOCAL_SCAN_MAX_SPAN_WORDS:
+                continue
+            first_key = tuple(previous_norms[block.a : block.a + LOCAL_SCAN_NGRAM])
+            last_key = tuple(previous_norms[block.a + block.size - LOCAL_SCAN_NGRAM : block.a + block.size])
+            repeat_count = max(anchor_counts.get(first_key, 2), anchor_counts.get(last_key, 2))
+            span_words = max(previous_span, current_span)
+            candidate = {
+                "previous_start": previous_start,
+                "previous_end": previous_end,
+                "current_start": current_start,
+                "current_end": current_end,
+                "matched_words": block.size,
+                "span_words": span_words,
+                "ratio": block.size / span_words if span_words else 0.0,
+                "repeat_count": repeat_count,
+            }
+            if best is None or (
+                candidate["matched_words"],
+                -candidate["span_words"],
+                candidate["ratio"],
+            ) > (
+                best["matched_words"],
+                -best["span_words"],
+                best["ratio"],
+            ):
+                best = candidate
+
+        for start_block_index, start_block in enumerate(blocks):
+            for end_block in blocks[start_block_index + 1 :]:
+                previous_start = start_block.a
+                current_start = start_block.b
+                previous_end = end_block.a + end_block.size
+                current_end = end_block.b + end_block.size
+                previous_span = previous_end - previous_start
+                current_span = current_end - current_start
+                if previous_span > LOCAL_SCAN_MAX_SPAN_WORDS or current_span > LOCAL_SCAN_MAX_SPAN_WORDS:
+                    continue
+                included_blocks = [
+                    block
+                    for block in blocks
+                    if previous_start <= block.a and block.a + block.size <= previous_end
+                    and current_start <= block.b
+                    and block.b + block.size <= current_end
+                ]
+                matched_words = sum(block.size for block in included_blocks)
+                span_words = max(previous_span, current_span)
+                if matched_words < LOCAL_SCAN_MIN_MATCHED_WORDS:
+                    continue
+                ratio = matched_words / span_words if span_words else 0.0
+                if ratio < LOCAL_SCAN_MIN_RATIO:
+                    continue
+                first_key = tuple(previous_norms[start_block.a : start_block.a + LOCAL_SCAN_NGRAM])
+                last_key = tuple(
+                    previous_norms[end_block.a + end_block.size - LOCAL_SCAN_NGRAM : end_block.a + end_block.size]
+                )
+                repeat_count = max(anchor_counts.get(first_key, 2), anchor_counts.get(last_key, 2))
+                candidate = {
+                    "previous_start": previous_start,
+                    "previous_end": previous_end,
+                    "current_start": current_start,
+                    "current_end": current_end,
+                    "matched_words": matched_words,
+                    "span_words": span_words,
+                    "ratio": ratio,
+                    "repeat_count": repeat_count,
+                }
+                if best is None or (
+                    candidate["matched_words"],
+                    -candidate["span_words"],
+                    candidate["ratio"],
+                ) > (
+                    best["matched_words"],
+                    -best["span_words"],
+                    best["ratio"],
+                ):
+                    best = candidate
+
+        if not best:
+            continue
+        previous_ranges = contiguous_range_from_tokens(previous_tokens, best["previous_start"], best["previous_end"])
+        current_ranges = contiguous_range_from_tokens(current_tokens, best["current_start"], best["current_end"])
+        if not previous_ranges or not current_ranges:
+            continue
+        words_count = max(range_len(previous_ranges[0]), range_len(current_ranges[0]))
+        coverage = phrase_ayah_coverage(words_count, current_ref, by_ref)
+        if words_count < 4 and coverage < BROAD_MIN_AYAH_COVERAGE:
+            continue
+        digest = hashlib.sha1(
+            f"{previous_ref}|{current_ref}|{previous_ranges}|{current_ranges}".encode("utf-8")
+        ).hexdigest()[:10]
+        relations.append(
+            {
+                "phrase_id": f"local-{digest}",
+                "current": current_ref,
+                "previous": previous_ref,
+                "currentRanges": current_ranges,
+                "previousRanges": previous_ranges,
+                "count": int(best["repeat_count"]),
+                "words": words_count,
+                "coverage": coverage,
+                "text": phrase_text_for_ranges(current_ref, current_ranges, by_ref),
+                "source": "local-scan",
+            }
+        )
+
+    return relations
+
+
+def merge_relations(qul_relations: list[dict[str, Any]], local_relations: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    merged = list(qul_relations)
+    for relation in local_relations:
+        duplicate = False
+        for existing in merged:
+            if relation["current"] != existing["current"] or relation["previous"] != existing["previous"]:
+                continue
+            if relation_ranges_overlap(relation["currentRanges"], existing["currentRanges"]) and relation_ranges_overlap(
+                relation["previousRanges"], existing["previousRanges"]
+            ):
+                duplicate = True
+                break
+        if not duplicate:
+            merged.append(relation)
+    return merged
+
+
 def build(refresh: bool, progress: bool) -> None:
     ayat = load_quran_data()
     by_ref = {ref_key(ayah["s"], ayah["a"]): ayah for ayah in ayat}
@@ -420,7 +653,9 @@ def build(refresh: bool, progress: bool) -> None:
     source, source_kind = load_qul_source(refresh=refresh, progress=progress)
     per_page: dict[int, list[dict[str, Any]]] = {page: [] for page in range(1, 605)}
     seen: set[tuple[str, str, str]] = set()
-    relations = iter_relations(source, by_ref, index_by_ref)
+    qul_relations = iter_relations(source, by_ref, index_by_ref)
+    local_relations = build_local_near_match_relations(ayat, by_ref, index_by_ref)
+    relations = merge_relations(qul_relations, local_relations)
 
     for relation in relations:
         current_ref = relation["current"]
@@ -442,7 +677,9 @@ def build(refresh: bool, progress: bool) -> None:
             relation["currentRanges"],
         )
         previous_phrase_diff, current_phrase_diff = diff_words(previous_phrase_text, current_phrase_text)
-        note = f"QUL phrase · {relation['words']} words · {relation['count']} repeats"
+        relation_source = relation.get("source") or "qul"
+        note_prefix = "Near-match scan" if relation_source == "local-scan" else "QUL phrase"
+        note = f"{note_prefix} · {relation['words']} words · {relation['count']} repeats"
         per_page[current_page].append(
             {
                 "id": make_id(relation["phrase_id"], current_ref, previous_ref),
@@ -463,6 +700,7 @@ def build(refresh: bool, progress: bool) -> None:
                 "repeatCount": relation["count"],
                 "wordCount": relation["words"],
                 "ayahCoverage": round(relation["coverage"], 3),
+                "source": relation_source,
                 "note": note,
                 "previousDiff": previous_diff,
                 "currentDiff": current_diff,
@@ -493,6 +731,7 @@ def build(refresh: bool, progress: bool) -> None:
         "sources": {
             "qul": QUL_RESOURCE_URL,
             "qulPublicPhraseIndex": QUL_PHRASES_URL,
+            "localNearMatchScan": "repeated 3-word anchors with compact ordered near-match spans",
         },
         "schema": "quran-test-mutashabihat/v1",
         "profile": "qul-hifz-sensitive",
@@ -507,9 +746,14 @@ def build(refresh: bool, progress: bool) -> None:
         "totalMatches": total_matches,
         "uniquePhrases": len(source["phrases"]),
         "relations": len(relations),
+        "qulRelations": len(qul_relations),
+        "localScanRelations": len(local_relations),
     }
     js_write(DATA_DIR / "mutashabihat-manifest.js", "QURAN_MUTASHABIHAT_MANIFEST", manifest)
-    print(f"Wrote {total_matches} QUL mutashabihat page matches from {len(source['phrases'])} phrases ({source_kind})")
+    print(
+        f"Wrote {total_matches} mutashabihat page matches "
+        f"({len(qul_relations)} QUL, {len(local_relations)} local scan; {source_kind})"
+    )
 
 
 def main() -> None:

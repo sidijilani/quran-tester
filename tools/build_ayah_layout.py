@@ -227,11 +227,189 @@ def token_weight(token: dict[str, Any]) -> float:
     return max(1.0, float(len(letters)))
 
 
+def column_runs(active: np.ndarray, min_width: int) -> list[tuple[int, int]]:
+    runs: list[tuple[int, int]] = []
+    start: int | None = None
+    for index, value in enumerate(active):
+        if value and start is None:
+            start = index
+        if start is not None and (not value or index == len(active) - 1):
+            end = index if not value else index + 1
+            if end - start >= min_width:
+                runs.append((start, end))
+            start = None
+    return runs
+
+
+def runs_for_token_alignment(crop: np.ndarray, width: int, target: int) -> list[tuple[int, int]]:
+    line_height = crop.shape[0]
+    col_threshold = max(1, int(line_height * 0.015))
+    best: list[tuple[int, int]] = []
+    for kernel_w in (2, 3, 1, 4, 5):
+        joined = cv2.dilate(crop, np.ones((1, max(1, kernel_w)), dtype=np.uint8), iterations=1)
+        active = joined.sum(axis=0) > col_threshold
+        runs = column_runs(active, min_width=max(1, int(width * 0.0015)))
+        runs = merge_close_runs(runs, max_gap=max(1, int(width * 0.0025)))
+        if len(runs) >= target:
+            if not best or len(runs) < len(best):
+                best = runs
+        elif not best and len(runs) > len(best):
+            best = runs
+    return best
+
+
+def aligned_token_spans(
+    runs_ltr: list[tuple[int, int]],
+    line_tokens: list[dict[str, Any]],
+) -> list[tuple[int, int]] | None:
+    target = len(line_tokens)
+    if len(runs_ltr) < target or target <= 0:
+        return None
+
+    runs = list(reversed(runs_ltr))
+    run_count = len(runs)
+    weights = [token_weight(token) for token in line_tokens]
+    total_weight = sum(weights) or 1.0
+    total_span = max(end for _, end in runs) - min(start for start, _ in runs)
+    expected = [max(1.0, (weight / total_weight) * total_span) for weight in weights]
+    max_group = max(2, min(6, run_count - target + 1))
+
+    def group_cost(token_index: int, start_run: int, end_run: int) -> float:
+        group = runs[start_run:end_run]
+        left = min(start for start, _ in group)
+        right = max(end for _, end in group)
+        span = max(1.0, right - left)
+        ratio = span / expected[token_index]
+        cost = abs(np.log(max(0.08, ratio))) * 1.7
+        internal_gap = 0
+        for first, second in zip(group, group[1:]):
+            # Runs are right-to-left, so the next run is visually to the left.
+            internal_gap += max(0, first[0] - second[1])
+        cost += internal_gap / 36.0
+        cost += max(0, len(group) - 1) * 0.05
+        return float(cost)
+
+    inf = float("inf")
+    dp = [[inf] * (run_count + 1) for _ in range(target + 1)]
+    back: list[list[int | None]] = [[None] * (run_count + 1) for _ in range(target + 1)]
+    dp[0][0] = 0.0
+    for token_index in range(target):
+        remaining_tokens = target - token_index - 1
+        for used_runs in range(run_count + 1):
+            if dp[token_index][used_runs] == inf:
+                continue
+            max_end = run_count - remaining_tokens
+            for end_run in range(used_runs + 1, min(max_end, used_runs + max_group) + 1):
+                cost = dp[token_index][used_runs] + group_cost(token_index, used_runs, end_run)
+                if cost < dp[token_index + 1][end_run]:
+                    dp[token_index + 1][end_run] = cost
+                    back[token_index + 1][end_run] = used_runs
+
+    if dp[target][run_count] == inf:
+        return None
+
+    assignments: list[tuple[int, int]] = []
+    cursor = run_count
+    for token_index in range(target, 0, -1):
+        previous = back[token_index][cursor]
+        if previous is None:
+            return None
+        group = runs[previous:cursor]
+        left = min(start for start, _ in group)
+        right = max(end for _, end in group)
+        assignments.append((left, right))
+        cursor = previous
+    assignments.reverse()
+    return assignments
+
+
+def visual_token_boxes(
+    mask: np.ndarray,
+    line_tokens: list[dict[str, Any]],
+    line_box: dict[str, Any],
+    width: int,
+    height: int,
+) -> list[dict[str, Any]] | None:
+    target = len(line_tokens)
+    if target <= 0:
+        return None
+
+    x1, y1, x2, y2 = line_box["px"]
+    crop = mask[y1:y2, x1:x2]
+    if crop.size == 0:
+        return None
+
+    runs = runs_for_token_alignment(crop, width, target)
+    spans = aligned_token_spans(runs, line_tokens)
+    if not spans:
+        return None
+
+    pad_x = max(1, int(width * 0.003))
+    boxes: list[dict[str, Any]] = []
+    for start, end in spans:
+        token_crop = mask[y1:y2, max(0, x1 + start - pad_x) : min(width, x1 + end + pad_x)]
+        ys, xs = np.nonzero(token_crop)
+        if ys.size:
+            abs_x1 = max(0, x1 + start - pad_x + int(xs.min()) - 1)
+            abs_x2 = min(width, x1 + start - pad_x + int(xs.max()) + 2)
+            abs_y1 = max(0, y1 + int(ys.min()) - 2)
+            abs_y2 = min(height, y1 + int(ys.max()) + 3)
+        else:
+            abs_x1 = x1 + start - pad_x
+            abs_x2 = x1 + end + pad_x
+            abs_y1 = y1
+            abs_y2 = y2
+        boxes.append(norm_box(abs_x1, abs_y1, abs_x2, abs_y2, width, height))
+    return boxes
+
+
+def weighted_token_boxes(
+    line_tokens: list[dict[str, Any]],
+    line_box: dict[str, Any],
+    width: int,
+    height: int,
+) -> list[dict[str, Any]]:
+    """Estimate per-token boxes from Quran.com line order and visual weights."""
+    x1, y1, x2, y2 = line_box["px"]
+    line_width = max(1, x2 - x1)
+    weights = [token_weight(token) for token in line_tokens]
+    total = sum(weights) or 1.0
+    cumulative = [0.0]
+    for weight in weights:
+        cumulative.append(cumulative[-1] + weight)
+
+    pad_x = max(1, int(width * 0.003))
+    boxes: list[dict[str, Any]] = []
+    for index, token in enumerate(line_tokens):
+        right = x2 - round((cumulative[index] / total) * line_width) + pad_x
+        left = x2 - round((cumulative[index + 1] / total) * line_width) - pad_x
+        box = norm_box(left, y1, right, y2, width, height)
+        box["token"] = token
+        boxes.append(box)
+    return boxes
+
+
+def token_boxes_for_line(
+    mask: np.ndarray,
+    line_tokens: list[dict[str, Any]],
+    line_box: dict[str, Any],
+    width: int,
+    height: int,
+) -> list[dict[str, Any]]:
+    return visual_token_boxes(mask, line_tokens, line_box, width, height) or weighted_token_boxes(
+        line_tokens,
+        line_box,
+        width,
+        height,
+    )
+
+
 def segment_line(
     page: int,
     line_number: int,
     line_tokens: list[dict[str, Any]],
     line_box: dict[str, Any],
+    mask: np.ndarray,
     width: int,
     height: int,
 ) -> dict[str, list[dict[str, Any]]]:
@@ -239,6 +417,8 @@ def segment_line(
     line_width = max(1, x2 - x1)
     ranges: dict[str, list[int]] = {}
     word_positions: dict[str, list[int]] = defaultdict(list)
+    word_boxes: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    token_boxes = token_boxes_for_line(mask, line_tokens, line_box, width, height)
     for index, token in enumerate(line_tokens):
         ayah = token["ayah"]
         if ayah not in ranges:
@@ -246,7 +426,11 @@ def segment_line(
         else:
             ranges[ayah][1] = index
         if token.get("type") == "word" and token.get("position"):
-            word_positions[ayah].append(int(token["position"]))
+            position = int(token["position"])
+            word_positions[ayah].append(position)
+            token_box = {key: token_boxes[index][key] for key in ("x", "y", "w", "h")}
+            token_box["i"] = position
+            word_boxes[ayah].append(token_box)
 
     boxes_by_ayah: dict[str, list[dict[str, Any]]] = defaultdict(list)
     weights = [token_weight(token) for token in line_tokens]
@@ -265,6 +449,7 @@ def segment_line(
         if word_positions.get(ayah):
             box["s"] = min(word_positions[ayah])
             box["e"] = max(word_positions[ayah])
+            box["words"] = word_boxes[ayah]
         boxes_by_ayah[ayah].append(box)
     return boxes_by_ayah
 
@@ -276,6 +461,7 @@ def layout_page(page: int) -> tuple[dict[str, Any], dict[str, dict[str, list[dic
         raise FileNotFoundError(f"Could not read page image: {image_path}")
 
     height, width = image.shape[:2]
+    mask = ink_mask(image)
     tokens = tokens_for_page(page)
     expected_lines = max((token["line"] for token in tokens), default=None)
     lines = detect_line_boxes(image, expected_lines)
@@ -289,7 +475,7 @@ def layout_page(page: int) -> tuple[dict[str, Any], dict[str, dict[str, list[dic
         if not line_box:
             print(f"page {page}: missing detected line {line_number}", file=sys.stderr)
             continue
-        segmented = segment_line(page, line_number, line_tokens, line_box, width, height)
+        segmented = segment_line(page, line_number, line_tokens, line_box, mask, width, height)
         for ayah, boxes in segmented.items():
             ayat[ayah].setdefault(str(page), []).extend(boxes)
 
