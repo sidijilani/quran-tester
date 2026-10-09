@@ -6,10 +6,12 @@
   const ayahLayoutPages = window.QURAN_AYAH_LAYOUT_PAGES || (window.QURAN_AYAH_LAYOUT_PAGES = {});
   const hifzChunkPages = window.QURAN_HIFZ_CHUNK_PAGES || (window.QURAN_HIFZ_CHUNK_PAGES = {});
   const mutashabihatPages = window.QURAN_MUTASHABIHAT_PAGES || (window.QURAN_MUTASHABIHAT_PAGES = {});
+  const waqfPages = window.QURAN_WAQF_PAGES || (window.QURAN_WAQF_PAGES = {});
   const ayahLayoutData = window.QURAN_AYAH_LAYOUT || {};
   const ayahLayoutManifest = window.QURAN_AYAH_LAYOUT_MANIFEST || {};
   const hifzManifest = window.QURAN_HIFZ_CHUNKS_MANIFEST || {};
   const mutashabihatManifest = window.QURAN_MUTASHABIHAT_MANIFEST || {};
+  const waqfManifest = window.QURAN_WAQF_MANIFEST || {};
   const ayahLayout = ayahLayoutData.ayat || {};
   const pageLayouts = ayahLayoutData.pages || {};
   const totalPages = ayat.reduce((max, ayah) => Math.max(max, ayah.page || 0), 0);
@@ -39,6 +41,15 @@
     testTab: $("testTab"),
     hifzTab: $("hifzTab"),
     mutashabihatTab: $("mutashabihatTab"),
+    waqfTab: $("waqfTab"),
+    waqfPanel: $("waqfPanel"),
+    waqfPage: $("waqfPage"),
+    waqfRef: $("waqfRef"),
+    waqfPageArea: $("waqfPageArea"),
+    waqfStops: $("waqfStops"),
+    waqfUnresolved: $("waqfUnresolved"),
+    waqfUnresolvedSummary: $("waqfUnresolvedSummary"),
+    waqfUnresolvedEntries: $("waqfUnresolvedEntries"),
     testPanel: $("testPanel"),
     quizPanel: $("quizPanel"),
     hifzPanel: $("hifzPanel"),
@@ -73,6 +84,7 @@
   const layoutPageLoads = new Map();
   const hifzPageLoads = new Map();
   const mutashabihatPageLoads = new Map();
+  const waqfPageLoads = new Map();
   const surahs = [];
   const ayahLookup = new Map();
   const pageBounds = new Map();
@@ -82,6 +94,8 @@
   let activePanel = "test";
   let hifzPage = 21;
   let mutashabihatPage = 21;
+  let waqfPage = 504;
+  let selectedWaqfMarkerId = null;
   let mutashabihatSensitivity = 3;
   let selectedMutashabihatMatchId = null;
   const mutashabihatSensitivityProfiles = [
@@ -863,19 +877,108 @@
     });
   }
 
+  function loadWaqfPage(page) {
+    const key = String(page);
+    if (waqfPages[key]) return Promise.resolve();
+    if (waqfPageLoads.has(key)) return waqfPageLoads.get(key);
+    const promise = new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = `data/waqf/pages/${page}.js`;
+      script.onload = () => {
+        if (waqfPages[key]) resolve();
+        else { waqfPageLoads.delete(key); script.remove(); reject(new Error("Missing Wa9f page payload")); }
+      };
+      script.onerror = () => {
+        waqfPageLoads.delete(key);
+        script.remove();
+        reject(new Error("Could not load Wa9f page"));
+      };
+      document.head.appendChild(script);
+    });
+    waqfPageLoads.set(key, promise);
+    return promise;
+  }
+
+  function addWaqfMarkers(wrap, page) {
+    // Layout loading can finish after the stops have already appeared. Keep
+    // the existing SVG so that keyboard focus survives that completion.
+    if (wrap.querySelector(".waqfMarkerLayer")?.dataset.page === String(page)) return;
+    wrap.querySelector(".waqfMarkerLayer")?.remove();
+    const data = waqfPages[String(page)];
+    if (!data) return;
+    const ns = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(ns, "svg");
+    svg.classList.add("waqfMarkerLayer");
+    svg.dataset.page = String(page);
+    svg.setAttribute("viewBox", `0 0 ${data.imageWidth} ${data.imageHeight}`);
+    svg.setAttribute("aria-label", "Supplemental waqf stops");
+    data.markers.forEach((marker) => {
+      const { geometry } = marker;
+      const x = geometry.x * data.imageWidth;
+      const top = geometry.top * data.imageHeight;
+      const size = geometry.size;
+      const group = document.createElementNS(ns, "g");
+      group.classList.add("waqfMarker");
+      group.classList.toggle("selected", marker.id === selectedWaqfMarkerId);
+      group.dataset.markerId = marker.id;
+      group.dataset.ambiguous = String(marker.ambiguous);
+      group.dataset.stopType = marker.stopType;
+      const category = marker.stopType === "necessity" ? "Continuing preferred"
+        : marker.stopType === "unspecified" ? "Category unspecified"
+          : marker.stopType === "lazim" ? "Source category: لازم" : "Permitted stop";
+      group.style.color = marker.stopType === "necessity" ? "#737373"
+        : marker.stopType === "unspecified" ? "#947039" : "#873d50";
+      group.setAttribute("role", "button");
+      group.setAttribute("tabindex", "0");
+      group.setAttribute("aria-label", `${category}${marker.ambiguous ? "; possible location" : ""} after ${marker.stopAfter}, ${marker.ref}`);
+      const title = document.createElementNS(ns, "title");
+      title.textContent = `${marker.stopAfter} · ${marker.ref} · ${category}${marker.ambiguous ? " · repeated wording: possible location" : ""}`;
+      const hit = document.createElementNS(ns, "rect");
+      hit.classList.add("waqfMarkerHit");
+      hit.setAttribute("x", x-12);
+      hit.setAttribute("y", top-3);
+      hit.setAttribute("width", "24");
+      hit.setAttribute("height", Math.max(30, geometry.lineBottom*data.imageHeight-top+5));
+      const shape = document.createElementNS(ns, "path");
+      shape.setAttribute("d", "M50 7 C45 24 33 39 15 50 C33 61 45 76 50 93 C55 76 67 61 85 50 C67 39 55 24 50 7 Z");
+      shape.setAttribute("transform", `translate(${x-size/2} ${top}) scale(${size/100})`);
+      if (marker.stopType === "necessity" || marker.stopType === "unspecified") {
+        shape.setAttribute("fill", "none");
+        shape.setAttribute("stroke", "currentColor");
+        shape.setAttribute("stroke-width", "6");
+      }
+      const line = document.createElementNS(ns, "line");
+      line.setAttribute("x1", x);
+      line.setAttribute("x2", x);
+      line.setAttribute("y1", geometry.lineTop*data.imageHeight);
+      line.setAttribute("y2", geometry.lineBottom*data.imageHeight);
+      group.append(title, hit, shape, line);
+      group.addEventListener("click", () => selectWaqfMarker(marker.id));
+      group.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          selectWaqfMarker(marker.id);
+        }
+      });
+      svg.appendChild(group);
+    });
+    wrap.appendChild(svg);
+  }
+
   function overlayBoxesForPage(page, mode) {
+    if (mode === "waqf") return [];
     if (mode === "hifz") return hifzBoxesForPage(page);
     if (mode === "mutashabihat") return mutashabihatBoxesForPage(page);
     if (mode === "mutashabihatPrevious") return mutashabihatPreviousBoxesForPage(page);
     return highlightBoxesForPage(page);
   }
 
-  function fallbackPage() {
+  function fallbackPage(mode = "test") {
     const div = document.createElement("div");
     div.className = "fallback";
     const text = document.createElement("div");
     text.className = "fallbackText";
-    const fallbackAyat = question ? question.chunk : [];
+    const fallbackAyat = mode === "test" && question ? question.chunk : [];
     if (!fallbackAyat.length) {
       text.textContent = "Page image unavailable.";
       div.appendChild(text);
@@ -933,23 +1036,40 @@
       wrap.style.aspectRatio = `${pageLayout.w} / ${pageLayout.h}`;
     }
     wrap.querySelectorAll(".band").forEach((band) => band.remove());
+    wrap.querySelector(".waqfMarkerLayer")?.remove();
     img.alt = `Madinah mushaf page ${page}`;
     img.onerror = () => {
-      wrap.replaceWith(fallbackPage());
+      wrap.replaceWith(fallbackPage(mode));
     };
     img.src = pagePath(page);
     addBands(wrap, overlayBoxesForPage(page, mode));
+    if (mode === "waqf") addWaqfMarkers(wrap, page);
     wrap.onclick = mode === "mutashabihat" ? (event) => selectBandAtPoint(wrap, event) : null;
     wrap.onpointerdown = mode === "mutashabihat" ? (event) => selectBandAtPoint(wrap, event) : null;
     const loads = [loadLayoutPage(page)];
     if (mode === "hifz") loads.push(loadHifzPage(page));
     if (mode === "mutashabihat") loads.push(loadMutashabihatPage(page));
+    if (mode === "waqf") loads.push(loadWaqfPage(page));
     Promise.all(loads).then(() => {
       if (fig.dataset.page === String(page)) {
         wrap.querySelectorAll(".band").forEach((band) => band.remove());
         addBands(wrap, overlayBoxesForPage(page, mode));
         if (mode === "hifz") renderHifzLegend();
         if (mode === "mutashabihat") renderMutashabihatDetails();
+        if (mode === "waqf") {
+          addWaqfMarkers(wrap, page);
+          if (waqfPage === page && fig.isConnected) renderWaqfStops();
+        }
+      }
+    }).catch(() => {
+      if (mode === "waqf" && waqfPage === page && fig.isConnected) {
+        els.waqfStops.textContent = "Could not load the stops for this page. ";
+        const retry = document.createElement("button");
+        retry.type = "button";
+        retry.className = "secondary small";
+        retry.textContent = "Retry";
+        retry.addEventListener("click", renderWaqfPage);
+        els.waqfStops.appendChild(retry);
       }
     });
   }
@@ -1259,19 +1379,144 @@
     renderMutashabihatDetails();
   }
 
+  function selectWaqfMarker(id) {
+    selectedWaqfMarkerId = id;
+    els.waqfPageArea.querySelectorAll(".waqfMarker").forEach((marker) => {
+      marker.classList.toggle("selected", marker.dataset.markerId === id);
+    });
+    renderWaqfStops();
+  }
+
+  function renderWaqfStops() {
+    const data = waqfPages[String(waqfPage)];
+    if (!data) return;
+    els.waqfRef.textContent = `Page ${waqfPage} · ${data.markers.length} supplemental stops`;
+    els.waqfStops.textContent = "";
+    if (!data.markers.length) els.waqfStops.textContent = "No additional stops located on this page.";
+    data.markers.forEach((marker) => {
+      const item = document.createElement("div");
+      item.className = "waqfStopItem";
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "waqfStopButton secondary";
+      button.setAttribute("aria-pressed", String(marker.id === selectedWaqfMarkerId));
+      const arabic = document.createElement("span");
+      arabic.lang = "ar";
+      arabic.dir = "rtl";
+      arabic.textContent = marker.stopAfter;
+      const ref = document.createElement("span");
+      ref.textContent = `${marker.ref}${marker.ambiguous ? " · Possible" : ""}`;
+      if (marker.stopType === "unspecified") ref.textContent += " · Category unspecified";
+      button.append(arabic, ref);
+      button.addEventListener("click", () => selectWaqfMarker(marker.id));
+      item.appendChild(button);
+      if (marker.id === selectedWaqfMarkerId) {
+        const sources = data.stops.filter((stop) => marker.sourceIds.includes(stop.id));
+        sources.forEach((stop) => {
+          const details = document.createElement("div");
+          details.className = "waqfSource";
+          const category = stop.stopType === "jaiz" ? "Permitted stop"
+            : stop.stopType === "necessity" ? "Permitted out of necessity; continuing preferred"
+              : stop.stopType === "lazim" ? "Source category: لازم" : "Source category unspecified";
+          const label = document.createElement("span");
+          label.textContent = `${category} · PDF page ${stop.source.pdfPage}, row ${stop.source.row}`;
+          const link = document.createElement("a");
+          link.href = `data/Woukoufet-Al-Koran-V2.pdf#page=${stop.source.pdfPage}`;
+          link.target = "_blank";
+          link.rel = "noopener";
+          link.textContent = "Open source";
+          details.append(label, link);
+          if (stop.ambiguous) {
+            const note = document.createElement("span");
+            note.textContent = `The source wording has ${stop.ambiguity.candidateCount} possible locations. All are kept as potential stops.`;
+            details.appendChild(note);
+          }
+          if (stop.existingMarks.length) {
+            const note = document.createElement("span");
+            note.textContent = "This possible location also has a printed stop sign.";
+            details.appendChild(note);
+          }
+          item.appendChild(details);
+        });
+      }
+      els.waqfStops.appendChild(item);
+    });
+    const unresolved = [...new Map(data.unresolved.map((entry) => [entry.sourceRowId, entry])).values()];
+    els.waqfUnresolved.hidden = !unresolved.length;
+    els.waqfUnresolvedSummary.textContent = `${unresolved.length} source entries still need checking`;
+    els.waqfUnresolvedEntries.textContent = "";
+    unresolved.forEach((entry) => {
+      const line = document.createElement("p");
+      const phrase = document.createElement("span");
+      phrase.lang = "ar";
+      phrase.dir = "rtl";
+      phrase.textContent = entry.phrase;
+      line.append(phrase, document.createTextNode(` · PDF page ${entry.pdfPage}`));
+      els.waqfUnresolvedEntries.appendChild(line);
+    });
+  }
+
+  function renderWaqfPage() {
+    waqfPage = clamp(els.waqfPage.value, 1, 604);
+    els.waqfPage.value = waqfPage;
+    localStorage.setItem("quran-waqf-page", String(waqfPage));
+    selectedWaqfMarkerId = null;
+    const pageMeta = (waqfManifest.pages || {})[String(waqfPage)];
+    els.waqfRef.textContent = `Page ${waqfPage}${pageMeta ? ` · ${pageMeta.markers} supplemental stops` : ""}`;
+    els.waqfStops.textContent = "Loading stops…";
+    els.waqfUnresolved.hidden = true;
+    els.waqfUnresolved.open = false;
+    els.waqfPageArea.textContent = "";
+    const viewer = document.createElement("div");
+    viewer.className = "pageViewer single";
+    const prev = document.createElement("button");
+    prev.className = "pageNav pageNavPrev";
+    prev.type = "button";
+    prev.textContent = "›";
+    prev.setAttribute("aria-label", "Previous page");
+    prev.disabled = waqfPage <= 1;
+    prev.addEventListener("click", () => setWaqfPage(waqfPage - 1));
+    const next = document.createElement("button");
+    next.className = "pageNav pageNavNext";
+    next.type = "button";
+    next.textContent = "‹";
+    next.setAttribute("aria-label", "Next page");
+    next.disabled = waqfPage >= 604;
+    next.addEventListener("click", () => setWaqfPage(waqfPage + 1));
+    const viewport = document.createElement("div");
+    viewport.className = "pageViewport";
+    viewport.appendChild(renderImagePage(waqfPage, "waqf"));
+    const status = document.createElement("div");
+    status.className = "pageStatus";
+    status.textContent = `page ${waqfPage}`;
+    viewer.append(prev, viewport, next, status);
+    els.waqfPageArea.appendChild(viewer);
+    renderWaqfStops();
+    preloadAdjacentPages(mushafPages, waqfPage - 1);
+  }
+
+  function setWaqfPage(page) {
+    els.waqfPage.value = clamp(page, 1, 604);
+    renderWaqfPage();
+  }
+
   function setActivePanel(mode) {
-    activePanel = mode === "hifz" || mode === "mutashabihat" ? mode : "test";
+    activePanel = ["hifz", "mutashabihat", "waqf"].includes(mode) ? mode : "test";
     els.testTab.classList.toggle("active", activePanel === "test");
     els.hifzTab.classList.toggle("active", activePanel === "hifz");
     els.mutashabihatTab.classList.toggle("active", activePanel === "mutashabihat");
+    els.waqfTab.classList.toggle("active", activePanel === "waqf");
+    [els.testTab, els.hifzTab, els.mutashabihatTab, els.waqfTab].forEach((tab) => tab.setAttribute("aria-pressed", String(tab.classList.contains("active"))));
     els.testPanel.hidden = activePanel !== "test";
     els.quizPanel.hidden = activePanel !== "test";
     els.hifzPanel.hidden = activePanel !== "hifz";
     els.mutashabihatPanel.hidden = activePanel !== "mutashabihat";
+    els.waqfPanel.hidden = activePanel !== "waqf";
     els.stats.hidden = activePanel !== "test";
     els.rangeNote.hidden = activePanel !== "test";
     if (activePanel === "hifz") renderHifzPage();
     if (activePanel === "mutashabihat") renderMutashabihatPage();
+    if (activePanel === "waqf") renderWaqfPage();
   }
 
   function renderAnswerPages() {
@@ -1366,14 +1611,18 @@
     els.testTab.addEventListener("click", () => setActivePanel("test"));
     els.hifzTab.addEventListener("click", () => setActivePanel("hifz"));
     els.mutashabihatTab.addEventListener("click", () => setActivePanel("mutashabihat"));
+    els.waqfTab.addEventListener("click", () => setActivePanel("waqf"));
     els.hifzPage.addEventListener("change", renderHifzPage);
     els.mutashabihatPage.addEventListener("change", renderMutashabihatPage);
+    els.waqfPage.addEventListener("change", renderWaqfPage);
     els.mutashabihatSensitivity.addEventListener("input", updateMutashabihatSensitivity);
     document.addEventListener("pointerdown", handleMutashabihatOutsidePointerDown, true);
     hifzPage = clamp(localStorage.getItem("quran-hifz-page") || els.hifzPage.value, 1, 604);
     els.hifzPage.value = hifzPage;
     mutashabihatPage = clamp(localStorage.getItem("quran-mutashabihat-page") || els.mutashabihatPage.value, 1, 604);
     els.mutashabihatPage.value = mutashabihatPage;
+    waqfPage = clamp(localStorage.getItem("quran-waqf-page") || els.waqfPage.value, 1, 604);
+    els.waqfPage.value = waqfPage;
     mutashabihatSensitivity = clamp(
       localStorage.getItem("quran-mutashabihat-sensitivity") || els.mutashabihatSensitivity.value,
       1,
@@ -1381,12 +1630,16 @@
     );
     updateMutashabihatSensitivityLabel();
     document.addEventListener("keydown", (event) => {
+      if (event.defaultPrevented || event.target.closest("input, select, textarea, button, .waqfMarker")) return;
       if (activePanel === "hifz") {
         if (event.key === "ArrowLeft") setHifzPage(hifzPage + 1);
         else if (event.key === "ArrowRight") setHifzPage(hifzPage - 1);
       } else if (activePanel === "mutashabihat") {
         if (event.key === "ArrowLeft") setMutashabihatPage(mutashabihatPage + 1);
         else if (event.key === "ArrowRight") setMutashabihatPage(mutashabihatPage - 1);
+      } else if (activePanel === "waqf") {
+        if (event.key === "ArrowLeft") setWaqfPage(waqfPage + 1);
+        else if (event.key === "ArrowRight") setWaqfPage(waqfPage - 1);
       } else if (event.key === " " && els.answer.hidden) {
         event.preventDefault();
         if (!els.reveal.disabled) reveal();
@@ -1399,6 +1652,11 @@
       }
     });
     loadNext();
+    const waqfRoute = location.hash.match(/^#waqf(?:=(\d+))?$/);
+    if (waqfRoute) {
+      if (waqfRoute[1]) els.waqfPage.value = clamp(waqfRoute[1], 1, 604);
+      setActivePanel("waqf");
+    }
   }
 
   init();

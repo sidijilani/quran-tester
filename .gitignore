@@ -1,0 +1,4 @@
+# Download caches, renders, and other build intermediates.
+/tmp/
+__pycache__/
+*.py[cod]

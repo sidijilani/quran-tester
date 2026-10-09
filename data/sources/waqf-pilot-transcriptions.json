@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "pdfSha256": "40c43905bba687e0600b73c4fd62a057c0332a79df909440dfa5e14ddd1c32d1",
+  "corrections": [
+    {
+      "id": "pdf-278-row-6",
+      "extractedPhrase": "لل",
+      "transcribedPhrase": "لله",
+      "basis": "Visually checked PDF page 278, row 6: the embedded font omits the final ha from extraction."
+    },
+    {
+      "id": "pdf-278-row-15",
+      "extractedPhrase": "الا الل",
+      "transcribedPhrase": "إلا الله",
+      "basis": "Visually checked PDF page 278, row 15: the embedded font omits the final ha from Allah."
+    }
+  ]
+}

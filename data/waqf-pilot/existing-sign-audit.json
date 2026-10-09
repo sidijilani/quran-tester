@@ -1,0 +1,521 @@
+{
+  "version": 1,
+  "auditOnly": true,
+  "samplePdfPages": [
+    5,
+    6,
+    7,
+    100,
+    278,
+    500,
+    554
+  ],
+  "sourceSha256": "40c43905bba687e0600b73c4fd62a057c0332a79df909440dfa5e14ddd1c32d1",
+  "textSha256": "a17f9c660b677f4511f16bd544a87cf496629d9ab8feb2516b87d4b1d185142b",
+  "summary": {
+    "flaggedRowsChecked": 10,
+    "flaggedWithOneMarkedCandidate": 7,
+    "orderResolvedControlsWithOneMarkedCandidate": 9,
+    "controlsAgreeing": 7,
+    "controlsConflicting": 2
+  },
+  "flaggedRows": [
+    {
+      "id": "pdf-5-row-9",
+      "pdfPhrase": "الذين امنوا",
+      "originalStatus": "order_conflict",
+      "testedPhrase": "والذين آمنوا",
+      "hypothesis": "PDF omits the attached waw; test the earlier occurrence suggested by its neighbors",
+      "headingRelaxedForAudit": false,
+      "candidates": [
+        {
+          "ref": "2:9",
+          "endWord": 4,
+          "stopAfter": "آمَنُوا",
+          "context": "يُخَادِعُونَ اللَّهَ وَالَّذِينَ آمَنُوا وَمَا يَخْدَعُونَ إِلَّا",
+          "existingMarks": []
+        }
+      ],
+      "uniqueMarkedCandidate": null,
+      "ruleOutcome": "no_marked_candidate",
+      "changesOriginalDecision": false
+    },
+    {
+      "id": "pdf-5-row-10",
+      "pdfPhrase": "أنفسهم",
+      "originalStatus": "order_conflict",
+      "testedPhrase": "أنفسهم",
+      "hypothesis": null,
+      "headingRelaxedForAudit": false,
+      "candidates": [
+        {
+          "ref": "2:9",
+          "endWord": 8,
+          "stopAfter": "أَنفُسَهُمْ",
+          "context": "وَمَا يَخْدَعُونَ إِلَّا أَنفُسَهُمْ وَمَا يَشْعُرُونَ",
+          "existingMarks": []
+        }
+      ],
+      "uniqueMarkedCandidate": null,
+      "ruleOutcome": "no_marked_candidate",
+      "changesOriginalDecision": false
+    },
+    {
+      "id": "pdf-6-row-12",
+      "pdfPhrase": "زرقا لكم",
+      "originalStatus": "unmatched",
+      "testedPhrase": "رزقا لكم",
+      "hypothesis": "PDF prints زرقا لكم; test swapping the first two letters",
+      "headingRelaxedForAudit": false,
+      "candidates": [
+        {
+          "ref": "2:22",
+          "endWord": 17,
+          "stopAfter": "لَّكُمْ",
+          "context": "بِهِ مِنَ الثَّمَرَاتِ رِزْقًا لَّكُمْ فَلَا تَجْعَلُوا لِلَّهِ",
+          "existingMarks": [
+            "ۖ"
+          ]
+        }
+      ],
+      "uniqueMarkedCandidate": {
+        "ref": "2:22",
+        "endWord": 17,
+        "stopAfter": "لَّكُمْ",
+        "context": "بِهِ مِنَ الثَّمَرَاتِ رِزْقًا لَّكُمْ فَلَا تَجْعَلُوا لِلَّهِ",
+        "existingMarks": [
+          "ۖ"
+        ]
+      },
+      "ruleOutcome": "one_marked_candidate",
+      "changesOriginalDecision": false
+    },
+    {
+      "id": "pdf-6-row-16",
+      "pdfPhrase": "الحجارة",
+      "originalStatus": "unmatched",
+      "testedPhrase": "والحجارة",
+      "hypothesis": "PDF omits the attached waw",
+      "headingRelaxedForAudit": false,
+      "candidates": [
+        {
+          "ref": "2:24",
+          "endWord": 11,
+          "stopAfter": "وَالْحِجَارَةُ",
+          "context": "الَّتِي وَقُودُهَا النَّاسُ وَالْحِجَارَةُ أُعِدَّتْ لِلْكَافِرِينَ",
+          "existingMarks": [
+            "ۖ"
+          ]
+        }
+      ],
+      "uniqueMarkedCandidate": {
+        "ref": "2:24",
+        "endWord": 11,
+        "stopAfter": "وَالْحِجَارَةُ",
+        "context": "الَّتِي وَقُودُهَا النَّاسُ وَالْحِجَارَةُ أُعِدَّتْ لِلْكَافِرِينَ",
+        "existingMarks": [
+          "ۖ"
+        ]
+      },
+      "ruleOutcome": "one_marked_candidate",
+      "changesOriginalDecision": false
+    },
+    {
+      "id": "pdf-7-row-12",
+      "pdfPhrase": "في الأرض",
+      "originalStatus": "order_conflict",
+      "testedPhrase": "في الأرض",
+      "hypothesis": null,
+      "headingRelaxedForAudit": false,
+      "candidates": [
+        {
+          "ref": "2:27",
+          "endWord": 17,
+          "stopAfter": "الْأَرْضِ",
+          "context": "أَن يُوصَلَ وَيُفْسِدُونَ فِي الْأَرْضِ أُولَٰئِكَ هُمُ الْخَاسِرُونَ",
+          "existingMarks": [
+            "ۚ"
+          ]
+        },
+        {
+          "ref": "2:29",
+          "endWord": 7,
+          "stopAfter": "الْأَرْضِ",
+          "context": "خَلَقَ لَكُم مَّا فِي الْأَرْضِ جَمِيعًا ثُمَّ اسْتَوَىٰ",
+          "existingMarks": []
+        }
+      ],
+      "uniqueMarkedCandidate": {
+        "ref": "2:27",
+        "endWord": 17,
+        "stopAfter": "الْأَرْضِ",
+        "context": "أَن يُوصَلَ وَيُفْسِدُونَ فِي الْأَرْضِ أُولَٰئِكَ هُمُ الْخَاسِرُونَ",
+        "existingMarks": [
+          "ۚ"
+        ]
+      },
+      "ruleOutcome": "one_marked_candidate",
+      "changesOriginalDecision": false
+    },
+    {
+      "id": "pdf-500-row-1",
+      "pdfPhrase": "حسنا",
+      "originalStatus": "unmatched",
+      "testedPhrase": "إحسانا",
+      "hypothesis": "Source حسنا differs from local Hafs wording; location hypothesis only",
+      "headingRelaxedForAudit": false,
+      "candidates": [
+        {
+          "ref": "46:15",
+          "endWord": 4,
+          "stopAfter": "إِحْسَانًا",
+          "context": "وَوَصَّيْنَا الْإِنسَانَ بِوَالِدَيْهِ إِحْسَانًا حَمَلَتْهُ أُمُّهُ كُرْهًا",
+          "existingMarks": [
+            "ۖ"
+          ]
+        }
+      ],
+      "uniqueMarkedCandidate": {
+        "ref": "46:15",
+        "endWord": 4,
+        "stopAfter": "إِحْسَانًا",
+        "context": "وَوَصَّيْنَا الْإِنسَانَ بِوَالِدَيْهِ إِحْسَانًا حَمَلَتْهُ أُمُّهُ كُرْهًا",
+        "existingMarks": [
+          "ۖ"
+        ]
+      },
+      "ruleOutcome": "one_marked_candidate",
+      "changesOriginalDecision": false
+    },
+    {
+      "id": "pdf-500-row-2",
+      "pdfPhrase": "كرها",
+      "originalStatus": "ambiguous",
+      "testedPhrase": "كرها",
+      "hypothesis": null,
+      "headingRelaxedForAudit": false,
+      "candidates": [
+        {
+          "ref": "46:15",
+          "endWord": 7,
+          "stopAfter": "كُرْهًا",
+          "context": "إِحْسَانًا حَمَلَتْهُ أُمُّهُ كُرْهًا وَوَضَعَتْهُ كُرْهًا وَحَمْلُهُ",
+          "existingMarks": []
+        },
+        {
+          "ref": "46:15",
+          "endWord": 9,
+          "stopAfter": "كُرْهًا",
+          "context": "أُمُّهُ كُرْهًا وَوَضَعَتْهُ كُرْهًا وَحَمْلُهُ وَفِصَالُهُ ثَلَاثُونَ",
+          "existingMarks": [
+            "ۖ"
+          ]
+        }
+      ],
+      "uniqueMarkedCandidate": {
+        "ref": "46:15",
+        "endWord": 9,
+        "stopAfter": "كُرْهًا",
+        "context": "أُمُّهُ كُرْهًا وَوَضَعَتْهُ كُرْهًا وَحَمْلُهُ وَفِصَالُهُ ثَلَاثُونَ",
+        "existingMarks": [
+          "ۖ"
+        ]
+      },
+      "ruleOutcome": "one_marked_candidate",
+      "changesOriginalDecision": false
+    },
+    {
+      "id": "pdf-554-row-1",
+      "pdfPhrase": "ما بينهما",
+      "originalStatus": "unmatched",
+      "testedPhrase": "وما بينهما",
+      "hypothesis": "PDF omits the attached waw",
+      "headingRelaxedForAudit": false,
+      "candidates": [
+        {
+          "ref": "78:37",
+          "endWord": 5,
+          "stopAfter": "بَيْنَهُمَا",
+          "context": "رَّبِّ السَّمَاوَاتِ وَالْأَرْضِ وَمَا بَيْنَهُمَا الرَّحْمَٰنِ لَا يَمْلِكُونَ",
+          "existingMarks": []
+        }
+      ],
+      "uniqueMarkedCandidate": null,
+      "ruleOutcome": "no_marked_candidate",
+      "changesOriginalDecision": false
+    },
+    {
+      "id": "pdf-554-row-2",
+      "pdfPhrase": "الرحمان",
+      "originalStatus": "unmatched",
+      "testedPhrase": "الرحمن",
+      "hypothesis": "Source الرحمان has an extra alif relative to the local text",
+      "headingRelaxedForAudit": false,
+      "candidates": [
+        {
+          "ref": "78:37",
+          "endWord": 6,
+          "stopAfter": "الرَّحْمَٰنِ",
+          "context": "وَالْأَرْضِ وَمَا بَيْنَهُمَا الرَّحْمَٰنِ لَا يَمْلِكُونَ مِنْهُ",
+          "existingMarks": [
+            "ۖ"
+          ]
+        },
+        {
+          "ref": "78:38",
+          "endWord": 12,
+          "stopAfter": "الرَّحْمَٰنُ",
+          "context": "مَنْ أَذِنَ لَهُ الرَّحْمَٰنُ وَقَالَ صَوَابًا",
+          "existingMarks": []
+        }
+      ],
+      "uniqueMarkedCandidate": {
+        "ref": "78:37",
+        "endWord": 6,
+        "stopAfter": "الرَّحْمَٰنِ",
+        "context": "وَالْأَرْضِ وَمَا بَيْنَهُمَا الرَّحْمَٰنِ لَا يَمْلِكُونَ مِنْهُ",
+        "existingMarks": [
+          "ۖ"
+        ]
+      },
+      "ruleOutcome": "one_marked_candidate",
+      "changesOriginalDecision": false
+    },
+    {
+      "id": "pdf-554-row-7",
+      "pdfPhrase": "ام السماء",
+      "originalStatus": "heading_conflict",
+      "testedPhrase": "ام السماء",
+      "hypothesis": null,
+      "headingRelaxedForAudit": true,
+      "candidates": [
+        {
+          "ref": "79:27",
+          "endWord": 5,
+          "stopAfter": "السَّمَاءُ",
+          "context": "أَأَنتُمْ أَشَدُّ خَلْقًا أَمِ السَّمَاءُ بَنَاهَا",
+          "existingMarks": [
+            "ۚ"
+          ]
+        }
+      ],
+      "uniqueMarkedCandidate": {
+        "ref": "79:27",
+        "endWord": 5,
+        "stopAfter": "السَّمَاءُ",
+        "context": "أَأَنتُمْ أَشَدُّ خَلْقًا أَمِ السَّمَاءُ بَنَاهَا",
+        "existingMarks": [
+          "ۚ"
+        ]
+      },
+      "ruleOutcome": "one_marked_candidate",
+      "changesOriginalDecision": false
+    }
+  ],
+  "orderResolvedControls": [
+    {
+      "id": "pdf-7-row-8",
+      "pdfPhrase": "مثلا",
+      "orderResolved": {
+        "ref": "2:26",
+        "endWord": 28,
+        "stopAfter": "مَثَلًا",
+        "context": "أَرَادَ اللَّهُ بِهَٰذَا مَثَلًا يُضِلُّ بِهِ كَثِيرًا",
+        "existingMarks": [
+          "ۘ"
+        ]
+      },
+      "signPreferred": {
+        "ref": "2:26",
+        "endWord": 28,
+        "stopAfter": "مَثَلًا",
+        "context": "أَرَادَ اللَّهُ بِهَٰذَا مَثَلًا يُضِلُّ بِهِ كَثِيرًا",
+        "existingMarks": [
+          "ۘ"
+        ]
+      },
+      "agreesWithOrder": true
+    },
+    {
+      "id": "pdf-7-row-9",
+      "pdfPhrase": "كثيرا",
+      "orderResolved": {
+        "ref": "2:26",
+        "endWord": 31,
+        "stopAfter": "كَثِيرًا",
+        "context": "مَثَلًا يُضِلُّ بِهِ كَثِيرًا وَيَهْدِي بِهِ كَثِيرًا",
+        "existingMarks": []
+      },
+      "signPreferred": {
+        "ref": "2:26",
+        "endWord": 34,
+        "stopAfter": "كَثِيرًا",
+        "context": "كَثِيرًا وَيَهْدِي بِهِ كَثِيرًا وَمَا يُضِلُّ بِهِ",
+        "existingMarks": [
+          "ۚ"
+        ]
+      },
+      "agreesWithOrder": false
+    },
+    {
+      "id": "pdf-7-row-10",
+      "pdfPhrase": "به كثيرا",
+      "orderResolved": {
+        "ref": "2:26",
+        "endWord": 34,
+        "stopAfter": "كَثِيرًا",
+        "context": "بِهِ كَثِيرًا وَيَهْدِي بِهِ كَثِيرًا وَمَا يُضِلُّ بِهِ",
+        "existingMarks": [
+          "ۚ"
+        ]
+      },
+      "signPreferred": {
+        "ref": "2:26",
+        "endWord": 34,
+        "stopAfter": "كَثِيرًا",
+        "context": "بِهِ كَثِيرًا وَيَهْدِي بِهِ كَثِيرًا وَمَا يُضِلُّ بِهِ",
+        "existingMarks": [
+          "ۚ"
+        ]
+      },
+      "agreesWithOrder": true
+    },
+    {
+      "id": "pdf-100-row-4",
+      "pdfPhrase": "الكتاب",
+      "orderResolved": {
+        "ref": "4:123",
+        "endWord": 6,
+        "stopAfter": "الْكِتَابِ",
+        "context": "وَلَا أَمَانِيِّ أَهْلِ الْكِتَابِ مَن يَعْمَلْ سُوءًا",
+        "existingMarks": [
+          "ۗ"
+        ]
+      },
+      "signPreferred": {
+        "ref": "4:123",
+        "endWord": 6,
+        "stopAfter": "الْكِتَابِ",
+        "context": "وَلَا أَمَانِيِّ أَهْلِ الْكِتَابِ مَن يَعْمَلْ سُوءًا",
+        "existingMarks": [
+          "ۗ"
+        ]
+      },
+      "agreesWithOrder": true
+    },
+    {
+      "id": "pdf-100-row-9",
+      "pdfPhrase": "النساء",
+      "orderResolved": {
+        "ref": "4:127",
+        "endWord": 3,
+        "stopAfter": "النِّسَاءِ",
+        "context": "وَيَسْتَفْتُونَكَ فِي النِّسَاءِ قُلِ اللَّهُ يُفْتِيكُمْ",
+        "existingMarks": [
+          "ۖ"
+        ]
+      },
+      "signPreferred": {
+        "ref": "4:127",
+        "endWord": 3,
+        "stopAfter": "النِّسَاءِ",
+        "context": "وَيَسْتَفْتُونَكَ فِي النِّسَاءِ قُلِ اللَّهُ يُفْتِيكُمْ",
+        "existingMarks": [
+          "ۖ"
+        ]
+      },
+      "agreesWithOrder": true
+    },
+    {
+      "id": "pdf-100-row-11",
+      "pdfPhrase": "النساء",
+      "orderResolved": {
+        "ref": "4:127",
+        "endWord": 15,
+        "stopAfter": "النِّسَاءِ",
+        "context": "الْكِتَابِ فِي يَتَامَى النِّسَاءِ اللَّاتِي لَا تُؤْتُونَهُنَّ",
+        "existingMarks": []
+      },
+      "signPreferred": {
+        "ref": "4:127",
+        "endWord": 3,
+        "stopAfter": "النِّسَاءِ",
+        "context": "وَيَسْتَفْتُونَكَ فِي النِّسَاءِ قُلِ اللَّهُ يُفْتِيكُمْ",
+        "existingMarks": [
+          "ۖ"
+        ]
+      },
+      "agreesWithOrder": false
+    },
+    {
+      "id": "pdf-278-row-6",
+      "pdfPhrase": "لل",
+      "orderResolved": {
+        "ref": "16:75",
+        "endWord": 23,
+        "stopAfter": "لِلَّهِ",
+        "context": "هَلْ يَسْتَوُونَ الْحَمْدُ لِلَّهِ بَلْ أَكْثَرُهُمْ لَا",
+        "existingMarks": [
+          "ۚ"
+        ]
+      },
+      "signPreferred": {
+        "ref": "16:75",
+        "endWord": 23,
+        "stopAfter": "لِلَّهِ",
+        "context": "هَلْ يَسْتَوُونَ الْحَمْدُ لِلَّهِ بَلْ أَكْثَرُهُمْ لَا",
+        "existingMarks": [
+          "ۚ"
+        ]
+      },
+      "agreesWithOrder": true
+    },
+    {
+      "id": "pdf-278-row-11",
+      "pdfPhrase": "والأرض",
+      "orderResolved": {
+        "ref": "16:77",
+        "endWord": 4,
+        "stopAfter": "وَالْأَرْضِ",
+        "context": "وَلِلَّهِ غَيْبُ السَّمَاوَاتِ وَالْأَرْضِ وَمَا أَمْرُ السَّاعَةِ",
+        "existingMarks": [
+          "ۚ"
+        ]
+      },
+      "signPreferred": {
+        "ref": "16:77",
+        "endWord": 4,
+        "stopAfter": "وَالْأَرْضِ",
+        "context": "وَلِلَّهِ غَيْبُ السَّمَاوَاتِ وَالْأَرْضِ وَمَا أَمْرُ السَّاعَةِ",
+        "existingMarks": [
+          "ۚ"
+        ]
+      },
+      "agreesWithOrder": true
+    },
+    {
+      "id": "pdf-500-row-14",
+      "pdfPhrase": "عملوا",
+      "orderResolved": {
+        "ref": "46:19",
+        "endWord": 4,
+        "stopAfter": "عَمِلُوا",
+        "context": "وَلِكُلٍّ دَرَجَاتٌ مِّمَّا عَمِلُوا وَلِيُوَفِّيَهُمْ أَعْمَالَهُمْ وَهُمْ",
+        "existingMarks": [
+          "ۖ"
+        ]
+      },
+      "signPreferred": {
+        "ref": "46:19",
+        "endWord": 4,
+        "stopAfter": "عَمِلُوا",
+        "context": "وَلِكُلٍّ دَرَجَاتٌ مِّمَّا عَمِلُوا وَلِيُوَفِّيَهُمْ أَعْمَالَهُمْ وَهُمْ",
+        "existingMarks": [
+          "ۖ"
+        ]
+      },
+      "agreesWithOrder": true
+    }
+  ],
+  "conclusion": "Existing signs can support a location hypothesis, but must not override phrase identity, surah, or row-order evidence. A remaining ambiguity may receive a sign-based suggestion, not a proven source assignment."
+}

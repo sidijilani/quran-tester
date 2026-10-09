@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Waqf text comparison</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font: 16px system-ui; margin: 24px; background: #f4f5f6; color: #16202c; }
+  h1 { font-size: 24px; margin-bottom: 8px; }
+  h2 { font-size: 19px; margin-top: 0; }
+  p { line-height: 1.6; }
+  .intro { max-width: 1000px; }
+  .toolbar { display: flex; gap: 8px; align-items: center; margin: 18px 0; }
+  button, select { font: inherit; padding: 8px; }
+  select { max-width: 75vw; min-width: 0; flex: 1; }
+  .comparison { display: grid; grid-template-columns: minmax(260px, 1fr) minmax(0, 2fr); gap: 20px; align-items: start; }
+  .card { background: white; border-radius: 10px; padding: 20px; }
+  .arabic { font: 29px/2 serif; direction: rtl; }
+  .phrase { font-size: 35px; padding: 15px; background: #f4f5f6; border-radius: 8px; }
+  .status { color: #8c2440; }
+  .verse { padding: 14px 8px; border-top: 1px solid #e5e7eb; }
+  .verse.selected { background: #fff9f0; border-radius: 6px; }
+  .reference { font: 13px system-ui; color: #526071; }
+  mark { color: inherit; background: #ffdf90; border-radius: 3px; padding: 3px; }
+  mark.endpoint { outline: 2px solid #b75416; }
+  .sign { color: #25635a; }
+  details { margin-top: 20px; }
+  summary { cursor: pointer; }
+  .source-image { position: relative; margin-top: 10px; }
+  .source-image img { display: block; width: 100%; }
+  .box { position: absolute; border: 3px solid #de1b4c; background: #de1b4c16; pointer-events: none; }
+  .suggestions { padding: 12px; background: #f7f0f2; border-radius: 6px; }
+  @media (max-width: 850px) { body { margin: 14px; } .comparison { grid-template-columns: 1fr; } }
+</style>
+<h1>Waqf pilot — text comparison</h1>
+<p class="intro">Compare the extracted PDF phrase with the local Hafs text. A stop follows the outlined word; the yellow span shows the matched phrase. Existing signs are preserved in the ayah. Every proposal remains pending review.</p>
+<p id="summary"></p>
+<div class="toolbar"><button id="prev">Previous</button><select id="picker" aria-label="Source row"></select><button id="next">Next</button></div>
+<div class="comparison">
+  <section class="card"><h2 id="sourceTitle"></h2><div id="sourceText"></div>
+    <details id="originalPdf"><summary>Check original PDF page</summary><div class="source-image"><img id="sourceImage" alt="Original source PDF page"><div class="box" id="sourceBox"></div></div></details>
+  </section>
+  <section class="card"><h2 id="targetTitle"></h2><div id="matchDetails"></div><div id="verses"></div></section>
+</div>
+<script>
+const report = __REPORT__;
+const rows = report.pages.flatMap(p => p.rows.map(r => ({ ...r, sourcePage: p })));
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const statusLabels = {exact_unique:'Unique text match',exact_order_resolved:'Text match resolved by row order',anchor_needs_review:'Text location found; page needs checking',unmatched:'No exact text match',ambiguous:'Multiple possible locations',order_conflict:'Source row order conflict',heading_conflict:'Source heading conflict'};
+let index = 0;
+$('summary').textContent = `${report.summary.rows} source rows · ${report.summary.cleanLocationMatches} location proposals · ${report.summary.needsReview} flagged · ${report.summary.cleanClassifications.additional_candidate || 0} potential additions · ${report.summary.cleanClassifications.existing_mark || 0} existing signs`;
+rows.forEach((r, i) => { const o = document.createElement('option'); o.value = i; o.textContent = `PDF ${r.pdfPage} · row ${r.row} · ${r.transcription?.transcribedPhrase || r.phrase} · ${statusLabels[r.matchStatus] || r.matchStatus}`; $('picker').append(o); });
+function renderVerse(ref, verse, match) {
+  const selected = match?.ref === ref;
+  // Reassemble original whitespace tokens, retaining standalone and attached signs.
+  const tokens = verse.ar.split(/(\s+)/);
+  let displayIndex = 0;
+  const content = tokens.map(token => {
+    if (/^\s+$/.test(token)) return esc(token);
+    displayIndex++;
+    if (selected && displayIndex >= match.startDisplayIndex && displayIndex <= match.endDisplayIndex) {
+      return `<mark${displayIndex === match.endDisplayIndex ? ' class="endpoint"' : ''}>${esc(token)}</mark>`;
+    }
+    return esc(token);
+  }).join('');
+  return `<article class="verse${selected ? ' selected' : ''}" data-ref="${esc(ref)}"><div class="reference">${esc(ref)} · ${esc(verse.surahName)} · ${verse.pages.length === 1 ? 'page' : 'pages'} ${verse.pages.join(', ')}</div><div class="arabic">${content}</div></article>`;
+}
+function show() {
+  const row = rows[index], match = row.match;
+  $('picker').value = index;
+  $('prev').disabled = index === 0;
+  $('next').disabled = index === rows.length - 1;
+  $('sourceTitle').textContent = `PDF page ${row.pdfPage}, row ${row.row}`;
+  $('sourceText').innerHTML = `<div class="arabic phrase">${esc(row.transcription?.transcribedPhrase || row.phrase)}</div>
+    <p dir="rtl">${esc(row.heading.title)}</p><p><strong>${esc(row.stopSymbol)}</strong> · ${esc(report.stopTypes[row.stopSymbol].meaning)}</p>
+    <p class="status">${esc(statusLabels[row.matchStatus] || row.matchStatus)} · pending review</p>
+    <p>Attribution</p><div dir="rtl">${esc(row.attribution)}</div>` +
+    (row.transcription ? `<p>Original extraction: <span dir="rtl">${esc(row.phrase)}</span><br>${esc(row.transcription.basis)}</p>` : '');
+  const [x0, y0, x1, y1] = row.bbox, p = row.sourcePage;
+  Object.assign($('sourceBox').style, {left: `${100*x0/p.width}%`, top: `${100*y0/p.height}%`, width: `${100*(x1-x0)/p.width}%`, height: `${100*(y1-y0)/p.height}%`});
+  // PDF image is optional and lazy; no mushaf images are referenced anywhere.
+  $('sourceImage').removeAttribute('src');
+  if ($('originalPdf').open) $('sourceImage').src = `review-assets/pdf-${row.pdfPage}.png`;
+  $('targetTitle').textContent = `Hafs text · page${row.heading.mushafPages.length > 1 ? 's' : ''} ${row.heading.mushafPages.join(', ')}`;
+  if (match) {
+    $('matchDetails').innerHTML = `<p>Ayah <strong>${esc(match.ref)}</strong> · stop after word <strong>${match.endWord}</strong> <span dir="rtl">${esc(match.stopAfter)}</span><br>Existing signs: <span dir="rtl">${esc(match.existingMarks.join(' ') || 'none')}</span></p>` +
+      (match.anchorIssues.length ? '<p class="status">The ayah spans pages; its word location is known, but its exact page is unverified.</p>' : '');
+  } else {
+    const suggestions = row.samePageSuggestions || row.feasibleCandidates || row.candidates || [];
+    $('matchDetails').innerHTML = `<p class="status">${esc([...row.headingIssues, ...(row.orderIssues || [])].join('; ')) || 'No location has been selected.'}</p>` +
+      (suggestions.length ? `<div class="suggestions">Unaccepted possibilities${suggestions.map(c => `<p>${esc(c.ref)} · word ${c.endWord}<br><span dir="rtl">${esc(c.context)}</span></p>`).join('')}</div>` : '');
+  }
+  const verses = Object.entries(report.reference.verses).filter(([ref, verse]) => verse.pages.some(p => row.heading.mushafPages.includes(p)) || ref === match?.ref);
+  $('verses').innerHTML = verses.map(([ref, verse]) => renderVerse(ref, verse, match)).join('');
+}
+$('picker').onchange = e => { index = Number(e.target.value); show(); };
+$('prev').onclick = () => { index--; show(); };
+$('next').onclick = () => { index++; show(); };
+$('originalPdf').ontoggle = () => { if ($('originalPdf').open) $('sourceImage').src = `review-assets/pdf-${rows[index].pdfPage}.png`; };
+show();
+</script>
+</html>

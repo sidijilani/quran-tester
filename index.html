@@ -12,6 +12,7 @@
   <script src="data/ayah-layout-manifest.js"></script>
   <script src="data/hifz-chunks-manifest.js"></script>
   <script src="data/mutashabihat-manifest.js"></script>
+  <script src="data/waqf/manifest.js"></script>
   <script defer src="app.js"></script>
 </head>
 <body>
@@ -29,6 +30,7 @@
           <button class="tab active" id="testTab" type="button">Test</button>
           <button class="tab" id="hifzTab" type="button">Hifz</button>
           <button class="tab" id="mutashabihatTab" type="button">Mutashabihat</button>
+          <button class="tab" id="waqfTab" type="button">Wa9f</button>
         </nav>
         <div class="stats" id="stats" aria-live="polite"></div>
       </div>
@@ -147,6 +149,29 @@
           <div id="mutashabihatPageArea"></div>
           <div class="mutashabihatOverlay" id="mutashabihatOverlay" hidden></div>
         </div>
+      </div>
+    </section>
+    <section class="waqfMode" id="waqfPanel" hidden>
+      <div class="answer">
+        <div class="answerHead">
+          <div class="ref" id="waqfRef">Page 504</div>
+          <label class="pageJump">
+            <span>Page</span>
+            <input type="number" id="waqfPage" min="1" max="604" value="504">
+          </label>
+        </div>
+        <div id="waqfPageArea"></div>
+        <div class="waqfLegend">
+          <span class="waqfLegendItem"><svg viewBox="0 0 20 28" aria-hidden="true"><path fill="#873d50" d="M10 1 C9 5 6 8 3 10 C6 12 9 15 10 19 C11 15 14 12 17 10 C14 8 11 5 10 1Z"/><path stroke="#873d50" d="M10 21V27"/></svg> Permitted stop · ج</span>
+          <span class="waqfLegendItem"><svg viewBox="0 0 20 28" aria-hidden="true"><path fill="none" stroke="#737373" d="M10 1 C9 5 6 8 3 10 C6 12 9 15 10 19 C11 15 14 12 17 10 C14 8 11 5 10 1Z"/><path stroke="#737373" d="M10 21V27"/></svg> Continuing preferred · ف</span>
+          <span>Repeated wording is labeled “Possible”.</span>
+        </div>
+        <div id="waqfStops" class="waqfStops" aria-live="polite"></div>
+        <details class="waqfUnresolved" id="waqfUnresolved" hidden><summary id="waqfUnresolvedSummary"></summary><div id="waqfUnresolvedEntries"></div></details>
+        <footer class="waqfCredit">
+          <p>Supplemental waqf compiled by <bdi lang="ar" dir="rtl">لطفي الفخفاخ</bdi> (Lotfi Fakhfakh).</p>
+          <a href="data/Woukoufet-Al-Koran-V2.pdf" target="_blank" rel="noopener">View original PDF</a>
+        </footer>
       </div>
     </section>
   </main>

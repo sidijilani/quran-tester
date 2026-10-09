@@ -1,0 +1,1 @@
+window.QURAN_WAQF_PAGES=window.QURAN_WAQF_PAGES||{};window.QURAN_WAQF_PAGES["591"]={"version":1,"page":591,"imageWidth":645,"imageHeight":1000,"stops":[],"markers":[],"unresolved":[{"sourceRowId":"pdf-555-row-6","pdfPage":555,"phrase":"ماشاء الله","pageHints":[591],"reason":"unmatched"}]};

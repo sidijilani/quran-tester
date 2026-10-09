@@ -1,0 +1,86 @@
+{
+  "version": 1,
+  "prototype": true,
+  "page": 504,
+  "pdfPage": 500,
+  "imageWidth": 645,
+  "imageHeight": 1000,
+  "coordinateSpace": "image-fraction",
+  "markers": [
+    {
+      "id": "pdf-500-row-4",
+      "symbol": "ف",
+      "stopType": "necessity",
+      "source": {
+        "pdfPage": 500,
+        "row": 4,
+        "phrase": "سنة",
+        "attribution": "أنداري مظفر"
+      },
+      "ref": "46:15",
+      "endWord": 20,
+      "stopAfter": "سَنَةً",
+      "matchedText": "سَنَةً",
+      "line": 3,
+      "wordBox": {
+        "x": 0.7845,
+        "y": 0.15,
+        "w": 0.07132,
+        "h": 0.039,
+        "i": 20
+      },
+      "x": 0.779845,
+      "y": 0.147
+    },
+    {
+      "id": "pdf-500-row-5",
+      "symbol": "ف",
+      "stopType": "necessity",
+      "source": {
+        "pdfPage": 500,
+        "row": 5,
+        "phrase": "والدي",
+        "attribution": "أنداري مظفر"
+      },
+      "ref": "46:15",
+      "endWord": 31,
+      "stopAfter": "وَالِدَيَّ",
+      "matchedText": "وَالِدَيَّ",
+      "line": 4,
+      "wordBox": {
+        "x": 0.70543,
+        "y": 0.211,
+        "w": 0.10388,
+        "h": 0.048,
+        "i": 31
+      },
+      "x": 0.700005,
+      "y": 0.208
+    },
+    {
+      "id": "pdf-500-row-8",
+      "symbol": "ف",
+      "stopType": "necessity",
+      "source": {
+        "pdfPage": 500,
+        "row": 8,
+        "phrase": "ماعملوا",
+        "attribution": "أنداري مظفر"
+      },
+      "ref": "46:16",
+      "endWord": 7,
+      "stopAfter": "عَمِلُوا",
+      "matchedText": "مَا عَمِلُوا",
+      "line": 6,
+      "wordBox": {
+        "x": 0.53178,
+        "y": 0.33,
+        "w": 0.08527,
+        "h": 0.048,
+        "i": 7
+      },
+      "x": 0.526355,
+      "y": 0.327
+    }
+  ]
+}

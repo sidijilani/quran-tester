@@ -1,0 +1,37 @@
+{
+  "scannedPdfPages": 554,
+  "tablePdfPages": 551,
+  "sourceRows": 6904,
+  "locatedSourceRows": 6410,
+  "locatedStops": 6701,
+  "newStopLocations": 2682,
+  "existingStopLocations": 3967,
+  "ayahEndLocations": 52,
+  "displayedMarkers": 2840,
+  "pagesWithMarkers": 561,
+  "ambiguousSourceRows": 267,
+  "ambiguousMarkers": 540,
+  "unlocatedSourceRows": 494,
+  "unresolvedLocations": 520,
+  "matchStatuses": {
+    "exact_unique": 5389,
+    "order_conflict": 76,
+    "exact_order_resolved": 754,
+    "unmatched": 418,
+    "ambiguous": 267
+  },
+  "issueReasons": {
+    "no_clear_gap_for_separator": 26,
+    "order_conflict": 76,
+    "unmatched": 418
+  },
+  "stopSymbols": {
+    "ج": 6232,
+    "ف": 660,
+    "": 6,
+    "ج_": 1,
+    "لازم": 3,
+    "ه": 1,
+    "ح": 1
+  }
+}

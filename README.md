@@ -10,6 +10,7 @@ The app uses:
 - `data/ayah-layout-manifest.js` for lightweight page layout metadata.
 - `data/hifz-chunks-pages/*.js` for per-page Hifz memorization chunks.
 - `data/hifz-chunks-manifest.js` for lightweight Hifz chunk metadata.
+- `data/waqf/manifest.js` and `data/waqf/pages/*.js` for supplemental PDF stops in the **Wa9f** tab.
 - `assets/pages/*.jpg` for the 604 local Madinah mushaf page images.
 
 To refresh the static assets:
@@ -31,3 +32,14 @@ python3 tools/build_hifz_chunks.py --progress
 ```
 
 The refresh step downloads upstream data and images, but the generated website is self-contained after that.
+
+The **Wa9f** tab shows supplemental stops from `data/Woukoufet-Al-Koran-V2.pdf`.
+Permitted stops use a filled burgundy lozenge; stops where continuing is preferred
+use a hollow gray lozenge. Both have a thin divider. Repeated-word candidates are
+labeled “Possible,” and unmatched entries remain flagged. Open
+`index.html#waqf=275` for an example containing both styles.
+
+Rebuild with `uv run tools/build_waqf.py`. See [the full import notes](tools/waqf.md)
+for provenance, matching and placement checks, coverage, pending entries, and
+word snapshot refresh instructions. The earlier [pilot notes](tools/waqf-pilot.md)
+and `data/waqf-pilot/review.html` are preserved separately.
