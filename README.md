@@ -1,6 +1,10 @@
-# Quran Tester Static App
+# Hifz Companion
 
-Open `index.html` in a browser to run the quiz with no Python server and no API calls.
+**Memorize. Review. Strengthen.**
+
+Open `index.html` in a browser to practice memorization, study Hifz chunks,
+compare Mutashabihat, and read supplemental waqf, with no Python server or API
+calls. The modes share page-style tabs; Test's range and score stay in its page.
 
 The app uses:
 

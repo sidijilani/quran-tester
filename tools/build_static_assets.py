@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build static Quran Tester assets.
+"""Build static Hifz Companion assets.
 
 Downloads the source Quran text, Quran.com page-line metadata, and Madinah
 mushaf page images, then writes browser-loadable static files.

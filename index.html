@@ -3,7 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Quran Tester</title>
+  <title>Hifz Companion</title>
+  <meta name="description" content="Memorize. Review. Strengthen. A Quran memorization companion with practice, Hifz, Mutashabihat, and supplemental waqf.">
   <link rel="icon" type="image/png" href="assets/app-icon.png">
   <link rel="apple-touch-icon" href="assets/app-icon.png">
   <link rel="stylesheet" href="styles.css">
@@ -21,159 +22,163 @@
       <div class="brand">
         <img class="appIcon" src="assets/app-icon.png" alt="" width="52" height="52">
         <div>
-          <h1>Quran Tester</h1>
-          <p id="rangeNote">Loading local Quran data...</p>
+          <h1>Hifz Companion</h1>
+          <p class="tagline">Memorize. Review. Strengthen.</p>
         </div>
-      </div>
-      <div class="topbarActions">
-        <nav class="appTabs" aria-label="Mode">
-          <button class="tab active" id="testTab" type="button">Test</button>
-          <button class="tab" id="hifzTab" type="button">Hifz</button>
-          <button class="tab" id="mutashabihatTab" type="button">Mutashabihat</button>
-          <button class="tab" id="waqfTab" type="button">Wa9f</button>
-        </nav>
-        <div class="stats" id="stats" aria-live="polite"></div>
       </div>
     </header>
 
-    <div id="testPanel">
-    <section class="toolbar" aria-label="Quiz settings">
-      <fieldset class="modeGroup">
-        <legend>Range</legend>
-        <label><input type="radio" name="rangeMode" value="pages" checked> Pages</label>
-        <label><input type="radio" name="rangeMode" value="ayah"> Ayah</label>
-      </fieldset>
-      <div class="rangePanel" id="pageRange">
-        <label>
-          <span>Start page</span>
-          <input type="number" id="startPage" min="1" max="604" value="1">
-        </label>
-        <label>
-          <span>Stop page</span>
-          <input type="number" id="endPage" min="1" max="604" value="10">
-        </label>
+    <div class="notebook">
+      <nav class="appTabs" role="tablist" aria-label="Study modes">
+        <button class="tab active" id="testTab" type="button" role="tab" aria-controls="testPanel" aria-selected="true">Test</button>
+        <button class="tab" id="hifzTab" type="button" role="tab" aria-controls="hifzPanel" aria-selected="false" tabindex="-1">Hifz</button>
+        <button class="tab" id="mutashabihatTab" type="button" role="tab" aria-controls="mutashabihatPanel" aria-selected="false" tabindex="-1">Mutashabihat</button>
+        <button class="tab" id="waqfTab" type="button" role="tab" aria-controls="waqfPanel" aria-selected="false" tabindex="-1">Wa9f</button>
+      </nav>
+      <div class="modePages">
+        <section class="testMode" id="testPanel" role="tabpanel" aria-labelledby="testTab">
+          <div class="testContext">
+            <p id="rangeNote">Loading local Quran data...</p>
+            <div class="stats" id="stats" aria-live="polite"></div>
+          </div>
+          <section class="toolbar" aria-label="Quiz settings">
+            <fieldset class="modeGroup">
+              <legend>Range</legend>
+              <label><input type="radio" name="rangeMode" value="pages" checked> Pages</label>
+              <label><input type="radio" name="rangeMode" value="ayah"> Ayah</label>
+            </fieldset>
+            <div class="rangePanel" id="pageRange">
+              <label>
+                <span>Start page</span>
+                <input type="number" id="startPage" min="1" max="604" value="1">
+              </label>
+              <label>
+                <span>Stop page</span>
+                <input type="number" id="endPage" min="1" max="604" value="10">
+              </label>
+            </div>
+            <div class="rangePanel" id="ayahRange" hidden>
+              <fieldset class="rangeGroup">
+                <legend>Start</legend>
+                <label>
+                  <span>Surah</span>
+                  <select id="startSurah"></select>
+                </label>
+                <label>
+                  <span>Ayah</span>
+                  <select id="startAyah"></select>
+                </label>
+              </fieldset>
+              <fieldset class="rangeGroup">
+                <legend>Stop</legend>
+                <label>
+                  <span>Surah</span>
+                  <select id="endSurah"></select>
+                </label>
+                <label>
+                  <span>Ayah</span>
+                  <select id="endAyah"></select>
+                </label>
+              </fieldset>
+            </div>
+            <label>
+              <span>Reveal words</span>
+              <input type="number" id="words" min="1" max="20" value="4">
+            </label>
+            <label>
+              <span>Ayat to show</span>
+              <input type="number" id="lines" min="1" max="20" value="4">
+            </label>
+            <div class="switches">
+              <label class="check"><input type="checkbox" id="highlight" checked> Highlight</label>
+              <label class="check"><input type="checkbox" id="translation"> Translation</label>
+            </div>
+          </section>
+          <section class="quiz" id="quizPanel">
+            <div class="question">
+              <div class="eyebrow" id="qnum">Ayah</div>
+              <div class="prompt" id="prompt" dir="rtl">...</div>
+              <div class="hint" id="hint"></div>
+              <div class="actions">
+                <button class="primary" id="revealBtn" type="button">Reveal</button>
+                <button class="secondary" id="skipBtn" type="button">Skip</button>
+              </div>
+            </div>
+
+            <div class="answer" id="answer" hidden>
+              <div class="answerHead">
+                <div class="ref" id="ref"></div>
+                <button class="secondary small" id="nextBtn" type="button">Next</button>
+              </div>
+              <div id="pageArea"></div>
+              <div class="grade" aria-label="Self grade">
+                <button class="clean" data-grade="clean" type="button">Clean</button>
+                <button class="hesitated" data-grade="hesitated" type="button">Hesitated</button>
+                <button class="failed" data-grade="failed" type="button">Failed</button>
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <section class="hifzMode" id="hifzPanel" role="tabpanel" aria-labelledby="hifzTab" hidden>
+          <div class="answer">
+            <div class="answerHead">
+              <div class="ref" id="hifzRef">Page 21</div>
+              <label class="pageJump">
+                <span>Page</span>
+                <input type="number" id="hifzPage" min="1" max="604" value="21">
+              </label>
+            </div>
+            <div id="hifzPageArea"></div>
+            <div class="hifzLegend" id="hifzLegend"></div>
+          </div>
+        </section>
+
+        <section class="mutashabihatMode" id="mutashabihatPanel" role="tabpanel" aria-labelledby="mutashabihatTab" hidden>
+          <div class="answer">
+            <div class="answerHead">
+              <div class="ref" id="mutashabihatRef">Page 21</div>
+              <label class="pageJump">
+                <span>Page</span>
+                <input type="number" id="mutashabihatPage" min="1" max="604" value="21">
+              </label>
+              <label class="sensitivityControl">
+                <span>Sensitivity</span>
+                <input type="range" id="mutashabihatSensitivity" min="1" max="5" value="3">
+                <output id="mutashabihatSensitivityValue" for="mutashabihatSensitivity">Balanced</output>
+              </label>
+            </div>
+            <div class="mutashabihatLayout">
+              <div id="mutashabihatPageArea"></div>
+              <div class="mutashabihatOverlay" id="mutashabihatOverlay" hidden></div>
+            </div>
+          </div>
+        </section>
+        <section class="waqfMode" id="waqfPanel" role="tabpanel" aria-labelledby="waqfTab" hidden>
+          <div class="answer">
+            <div class="answerHead">
+              <div class="ref" id="waqfRef">Page 504</div>
+              <label class="pageJump">
+                <span>Page</span>
+                <input type="number" id="waqfPage" min="1" max="604" value="504">
+              </label>
+            </div>
+            <div id="waqfPageArea"></div>
+            <div class="waqfLegend">
+              <span class="waqfLegendItem"><svg viewBox="0 0 20 28" aria-hidden="true"><path fill="#873d50" d="M10 1 C9 5 6 8 3 10 C6 12 9 15 10 19 C11 15 14 12 17 10 C14 8 11 5 10 1Z"/><path stroke="#873d50" d="M10 21V27"/></svg> Permitted stop · ج</span>
+              <span class="waqfLegendItem"><svg viewBox="0 0 20 28" aria-hidden="true"><path fill="none" stroke="#737373" d="M10 1 C9 5 6 8 3 10 C6 12 9 15 10 19 C11 15 14 12 17 10 C14 8 11 5 10 1Z"/><path stroke="#737373" d="M10 21V27"/></svg> Continuing preferred · ف</span>
+              <span>Repeated wording is labeled “Possible”.</span>
+            </div>
+            <div id="waqfStops" class="waqfStops" aria-live="polite"></div>
+            <details class="waqfUnresolved" id="waqfUnresolved" hidden><summary id="waqfUnresolvedSummary"></summary><div id="waqfUnresolvedEntries"></div></details>
+            <footer class="waqfCredit">
+              <p>Supplemental waqf compiled by <bdi lang="ar" dir="rtl">لطفي الفخفاخ</bdi> (Lotfi Fakhfakh).</p>
+              <a href="data/Woukoufet-Al-Koran-V2.pdf" target="_blank" rel="noopener">View original PDF</a>
+            </footer>
+          </div>
+        </section>
       </div>
-      <div class="rangePanel" id="ayahRange" hidden>
-        <fieldset class="rangeGroup">
-          <legend>Start</legend>
-          <label>
-            <span>Surah</span>
-            <select id="startSurah"></select>
-          </label>
-          <label>
-            <span>Ayah</span>
-            <select id="startAyah"></select>
-          </label>
-        </fieldset>
-        <fieldset class="rangeGroup">
-          <legend>Stop</legend>
-          <label>
-            <span>Surah</span>
-            <select id="endSurah"></select>
-          </label>
-          <label>
-            <span>Ayah</span>
-            <select id="endAyah"></select>
-          </label>
-        </fieldset>
-      </div>
-      <label>
-        <span>Reveal words</span>
-        <input type="number" id="words" min="1" max="20" value="4">
-      </label>
-      <label>
-        <span>Ayat to show</span>
-        <input type="number" id="lines" min="1" max="20" value="4">
-      </label>
-      <div class="switches">
-        <label class="check"><input type="checkbox" id="highlight" checked> Highlight</label>
-        <label class="check"><input type="checkbox" id="translation"> Translation</label>
-      </div>
-    </section>
     </div>
-
-    <section class="quiz" id="quizPanel">
-      <div class="question">
-        <div class="eyebrow" id="qnum">Ayah</div>
-        <div class="prompt" id="prompt" dir="rtl">...</div>
-        <div class="hint" id="hint"></div>
-        <div class="actions">
-          <button class="primary" id="revealBtn" type="button">Reveal</button>
-          <button class="secondary" id="skipBtn" type="button">Skip</button>
-        </div>
-      </div>
-
-      <div class="answer" id="answer" hidden>
-        <div class="answerHead">
-          <div class="ref" id="ref"></div>
-          <button class="secondary small" id="nextBtn" type="button">Next</button>
-        </div>
-        <div id="pageArea"></div>
-        <div class="grade" aria-label="Self grade">
-          <button class="clean" data-grade="clean" type="button">Clean</button>
-          <button class="hesitated" data-grade="hesitated" type="button">Hesitated</button>
-          <button class="failed" data-grade="failed" type="button">Failed</button>
-        </div>
-      </div>
-    </section>
-
-    <section class="hifzMode" id="hifzPanel" hidden>
-      <div class="answer">
-        <div class="answerHead">
-          <div class="ref" id="hifzRef">Page 21</div>
-          <label class="pageJump">
-            <span>Page</span>
-            <input type="number" id="hifzPage" min="1" max="604" value="21">
-          </label>
-        </div>
-        <div id="hifzPageArea"></div>
-        <div class="hifzLegend" id="hifzLegend"></div>
-      </div>
-    </section>
-
-    <section class="mutashabihatMode" id="mutashabihatPanel" hidden>
-      <div class="answer">
-        <div class="answerHead">
-          <div class="ref" id="mutashabihatRef">Page 21</div>
-          <label class="pageJump">
-            <span>Page</span>
-            <input type="number" id="mutashabihatPage" min="1" max="604" value="21">
-          </label>
-          <label class="sensitivityControl">
-            <span>Sensitivity</span>
-            <input type="range" id="mutashabihatSensitivity" min="1" max="5" value="3">
-            <output id="mutashabihatSensitivityValue" for="mutashabihatSensitivity">Balanced</output>
-          </label>
-        </div>
-        <div class="mutashabihatLayout">
-          <div id="mutashabihatPageArea"></div>
-          <div class="mutashabihatOverlay" id="mutashabihatOverlay" hidden></div>
-        </div>
-      </div>
-    </section>
-    <section class="waqfMode" id="waqfPanel" hidden>
-      <div class="answer">
-        <div class="answerHead">
-          <div class="ref" id="waqfRef">Page 504</div>
-          <label class="pageJump">
-            <span>Page</span>
-            <input type="number" id="waqfPage" min="1" max="604" value="504">
-          </label>
-        </div>
-        <div id="waqfPageArea"></div>
-        <div class="waqfLegend">
-          <span class="waqfLegendItem"><svg viewBox="0 0 20 28" aria-hidden="true"><path fill="#873d50" d="M10 1 C9 5 6 8 3 10 C6 12 9 15 10 19 C11 15 14 12 17 10 C14 8 11 5 10 1Z"/><path stroke="#873d50" d="M10 21V27"/></svg> Permitted stop · ج</span>
-          <span class="waqfLegendItem"><svg viewBox="0 0 20 28" aria-hidden="true"><path fill="none" stroke="#737373" d="M10 1 C9 5 6 8 3 10 C6 12 9 15 10 19 C11 15 14 12 17 10 C14 8 11 5 10 1Z"/><path stroke="#737373" d="M10 21V27"/></svg> Continuing preferred · ف</span>
-          <span>Repeated wording is labeled “Possible”.</span>
-        </div>
-        <div id="waqfStops" class="waqfStops" aria-live="polite"></div>
-        <details class="waqfUnresolved" id="waqfUnresolved" hidden><summary id="waqfUnresolvedSummary"></summary><div id="waqfUnresolvedEntries"></div></details>
-        <footer class="waqfCredit">
-          <p>Supplemental waqf compiled by <bdi lang="ar" dir="rtl">لطفي الفخفاخ</bdi> (Lotfi Fakhfakh).</p>
-          <a href="data/Woukoufet-Al-Koran-V2.pdf" target="_blank" rel="noopener">View original PDF</a>
-        </footer>
-      </div>
-    </section>
   </main>
 </body>
 </html>

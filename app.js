@@ -1506,14 +1506,15 @@
     els.hifzTab.classList.toggle("active", activePanel === "hifz");
     els.mutashabihatTab.classList.toggle("active", activePanel === "mutashabihat");
     els.waqfTab.classList.toggle("active", activePanel === "waqf");
-    [els.testTab, els.hifzTab, els.mutashabihatTab, els.waqfTab].forEach((tab) => tab.setAttribute("aria-pressed", String(tab.classList.contains("active"))));
+    [els.testTab, els.hifzTab, els.mutashabihatTab, els.waqfTab].forEach((tab) => {
+      const selected = tab.classList.contains("active");
+      tab.setAttribute("aria-selected", String(selected));
+      tab.tabIndex = selected ? 0 : -1;
+    });
     els.testPanel.hidden = activePanel !== "test";
-    els.quizPanel.hidden = activePanel !== "test";
     els.hifzPanel.hidden = activePanel !== "hifz";
     els.mutashabihatPanel.hidden = activePanel !== "mutashabihat";
     els.waqfPanel.hidden = activePanel !== "waqf";
-    els.stats.hidden = activePanel !== "test";
-    els.rangeNote.hidden = activePanel !== "test";
     if (activePanel === "hifz") renderHifzPage();
     if (activePanel === "mutashabihat") renderMutashabihatPage();
     if (activePanel === "waqf") renderWaqfPage();
@@ -1612,6 +1613,17 @@
     els.hifzTab.addEventListener("click", () => setActivePanel("hifz"));
     els.mutashabihatTab.addEventListener("click", () => setActivePanel("mutashabihat"));
     els.waqfTab.addEventListener("click", () => setActivePanel("waqf"));
+    const modeTabs = [els.testTab, els.hifzTab, els.mutashabihatTab, els.waqfTab];
+    const tabModes = ["test", "hifz", "mutashabihat", "waqf"];
+    document.querySelector(".appTabs").addEventListener("keydown", (event) => {
+      const current = modeTabs.indexOf(event.target);
+      if (current < 0 || !["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+      event.preventDefault();
+      const next = event.key === "Home" ? 0 : event.key === "End" ? modeTabs.length - 1
+        : (current + (event.key === "ArrowRight" ? 1 : -1) + modeTabs.length) % modeTabs.length;
+      setActivePanel(tabModes[next]);
+      modeTabs[next].focus();
+    });
     els.hifzPage.addEventListener("change", renderHifzPage);
     els.mutashabihatPage.addEventListener("change", renderMutashabihatPage);
     els.waqfPage.addEventListener("change", renderWaqfPage);
