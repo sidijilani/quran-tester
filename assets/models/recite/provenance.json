@@ -1,0 +1,17 @@
+{
+  "model": {
+    "file": "zipformer_p_arabic_v3.1.int8.onnx",
+    "url": "https://prompter.alketab.app/models/quran_phoneme_zipformer.onnx?v=31755836",
+    "bytes": 72705392,
+    "sha256": "31755836528da336a6192121cd7bc82cb41752dddb65566fd000b89c8686da6b",
+    "upstream": "https://huggingface.co/Quran-Lab/zipformer_p-arabic-v3",
+    "revision": "3da514fc833b22c902ee466a7710cf399896f2f0"
+  },
+  "tokens": {
+    "file": "tokens-prompter.txt",
+    "url": "https://prompter.alketab.app/assets/decoder.worker-D4jMQMQ1.js",
+    "sha256": "63e2554dd99b3e7931b5ab36dac696f631a38f254efd8e5f91fa2325998a1e69",
+    "note": "251 distributed symbols serialized as symbol + space + ID; this is not the original HF tokens.txt byte stream."
+  },
+  "license": "Quran-Lab No-Profit License 1.2"
+}

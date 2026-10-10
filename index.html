@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Hifz Companion</title>
-  <meta name="description" content="Memorize. Review. Strengthen. A Quran memorization companion with practice, Hifz, Mutashabihat, and supplemental waqf.">
+  <meta name="description" content="Memorize. Review. Strengthen. A Quran memorization companion with practice, Recite, Hifz, Mutashabihat, and supplemental waqf.">
   <link rel="icon" type="image/png" href="assets/app-icon.png">
   <link rel="apple-touch-icon" href="assets/app-icon.png">
   <link rel="stylesheet" href="styles.css">
@@ -14,6 +14,15 @@
   <script src="data/hifz-chunks-manifest.js"></script>
   <script src="data/mutashabihat-manifest.js"></script>
   <script src="data/waqf/manifest.js"></script>
+  <script src="data/recite/catalog.js"></script>
+  <script src="data/recite/page-3.js"></script>
+  <script src="data/recite/page-4.js"></script>
+  <script defer src="recite-core.js"></script>
+  <script defer src="recite-tracker.js"></script>
+  <script defer src="recite-guide.js"></script>
+  <script defer src="recite-commands.js"></script>
+  <script defer src="recite-data.js"></script>
+  <script defer src="recite.js"></script>
   <script defer src="app.js"></script>
 </head>
 <body>
@@ -31,6 +40,7 @@
     <div class="notebook">
       <nav class="appTabs" role="tablist" aria-label="Study modes">
         <button class="tab active" id="testTab" type="button" role="tab" aria-controls="testPanel" aria-selected="true">Test</button>
+        <button class="tab" id="reciteTab" type="button" role="tab" aria-controls="recitePanel" aria-selected="false" tabindex="-1">Recite</button>
         <button class="tab" id="hifzTab" type="button" role="tab" aria-controls="hifzPanel" aria-selected="false" tabindex="-1">Hifz</button>
         <button class="tab" id="mutashabihatTab" type="button" role="tab" aria-controls="mutashabihatPanel" aria-selected="false" tabindex="-1">Mutashabihat</button>
         <button class="tab" id="waqfTab" type="button" role="tab" aria-controls="waqfPanel" aria-selected="false" tabindex="-1">Wa9f</button>
@@ -118,6 +128,94 @@
               </div>
             </div>
           </section>
+        </section>
+
+        <section class="reciteMode" id="recitePanel" role="tabpanel" aria-labelledby="reciteTab" hidden>
+          <div class="reciteHeading"><div><div class="eyebrow">Recite · From memory</div><h2 id="reciteTitle">Al-Baqarah</h2><p id="reciteSubtitle">Page 3 · Ayat 6–16. Begin at the outlined word.</p></div><span class="recitePageNumber" id="recitePageLabel">Page 3</span></div>
+          <div class="reciteSessionSettings">
+            <div class="reciteModeSwitch" role="group" aria-label="Practice mode"><button id="reciteVisualMode" type="button" aria-pressed="true">Visual</button><button id="reciteAudioMode" type="button" aria-pressed="false">Audio</button></div>
+            <span id="reciteSessionRange" class="reciteSessionRange">Choose a range for a random starting ayah</span>
+          </div>
+          <fieldset id="reciteRange" class="reciteRange">
+            <legend>Practice range</legend>
+            <div class="reciteRangeModes"><label><input type="radio" name="reciteRangeMode" value="pages" checked> Pages</label><label><input type="radio" name="reciteRangeMode" value="ayah"> Surah / Ayah</label></div>
+            <div id="recitePageRange" class="reciteRangeFields"><label>From page <input id="reciteStartPage" type="number" min="1" max="604" value="3"></label><label>To page <input id="reciteEndPage" type="number" min="1" max="604" value="10"></label></div>
+            <div id="reciteAyahRange" class="reciteRangeFields" hidden><label>From surah <select id="reciteStartSurah"></select></label><label>Ayah <select id="reciteStartAyah"></select></label><label>To surah <select id="reciteEndSurah"></select></label><label>Ayah <select id="reciteEndAyah"></select></label></div>
+            <p>A random ayah starts each new test. Continue to the end of the range; finish the last ayah if it crosses a page.</p>
+          </fieldset>
+          <div id="reciteAudioSettings" class="reciteAudioSettings" hidden>
+            <label>Attempts before help <select id="reciteAttempts"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select></label>
+            <label>Opening cue <select id="reciteCueWords"><option value="1">1 word</option><option value="2">2 words</option><option value="3" selected>3 words</option><option value="4">4 words</option><option value="5">5 words</option></select></label>
+            <label class="reciteCheckbox"><input id="reciteVoiceCommands" type="checkbox" checked> Local voice commands</label>
+            <p>Sudais starts the prompt. Recite from the ayah’s beginning. Continue into the next ayah naturally; ask for “Repeat” when you need a cue.</p>
+          </div>
+          <div class="reciteLayout">
+            <div class="recitePaper" id="recitePaper">
+              <img id="reciteImage" src="assets/pages/3.jpg" width="645" height="1000" alt="Al-Baqarah practice page. Hidden words are revealed as you progress." draggable="false">
+              <svg id="reciteMask" viewBox="0 0 645 1000" aria-hidden="true"></svg>
+            </div>
+            <aside class="reciteControls" aria-label="Recitation controls">
+            <section id="reciteAudioCard" class="reciteAudioCard" hidden aria-label="Audio practice">
+              <div class="eyebrow">Audio practice · Sudais</div>
+              <h3 id="reciteAudioAyah">Al-Baqarah · Ayah 6</h3>
+              <p id="recitePlaybackStatus" role="status">Opening cue ready</p>
+              <p id="reciteAttemptStatus">Up to 3 attempts before Sudais helps.</p>
+              <button id="reciteInterrupt" class="secondary" type="button" hidden>Interrupt and recite</button>
+              <p class="reciteAudioNote">Keep this app open. Speaker interruption is experimental; headphones can reduce echo.</p>
+            </section>
+              <div class="reciteStatusRow"><span class="reciteStatusDot" id="reciteStatusDot"></span><strong id="reciteState">Ready to practice</strong><span id="reciteModeBadge" class="reciteBadge" hidden>Demo</span></div>
+              <p id="reciteMessage" role="status" aria-live="polite">Three opening cue words are visible. Recite from the beginning; the outline shows your place.</p>
+              <div class="reciteProgress"><span id="reciteCount">0 of 127 words</span><span id="reciteReviewCount">No words to revisit</span></div>
+              <progress id="reciteProgress" value="0" max="127" aria-label="Confirmed words"></progress>
+              <div class="reciteActions">
+                <button class="primary" id="reciteStart" type="button">Start reciting</button>
+                <button class="secondary" id="reciteNewTest" type="button">New test</button>
+                <button class="secondary" id="reciteDemo" type="button">Try the demo</button>
+                <button class="primary" id="reciteRetry" type="button" hidden>Try that word again</button>
+                <button class="secondary" id="recitePause" type="button" hidden>Pause</button>
+                <button class="secondary" id="reciteEndSession" type="button" hidden>End session</button>
+              </div>
+              <div id="reciteAudioTools" class="reciteTools" hidden><button class="secondary small" id="recitePlayCue" type="button">Repeat cue</button><button class="secondary small" id="recitePlayHelp" type="button">Hear ayah</button><button class="secondary small" id="reciteCacheAudio" type="button">Save range offline</button></div>
+              <p id="reciteCommandsStatus" class="reciteCommandsStatus" hidden>Voice commands load when audio practice starts.</p>
+              <p id="reciteWakeStatus" class="reciteCommandsStatus" hidden></p>
+              <p id="reciteOfflineStatus" class="reciteCommandsStatus" hidden></p>
+              <div id="reciteDemoControls" class="reciteDemoControls" hidden>
+                <p>Mechanics demo · No microphone or speech recognition.</p>
+                <button class="secondary small" id="reciteDemoNext" type="button">Read next word</button>
+                <button class="secondary small" id="reciteDemoMistake" type="button">Try a mistake</button>
+              </div>
+              <div class="reciteTools"><button class="secondary small" id="reciteHint" type="button">Show a hint</button><button class="secondary small" id="reciteRestart" type="button">Start over</button><button class="secondary small" id="reciteReveal" type="button">Reveal page</button></div>
+              <div class="reciteLegend"><span><i class="reciteCueKey"></i> Cue / hint</span><span><i class="reciteUnclearKey"></i> Unclear</span><span><i class="reciteWrongKey"></i> Wrong</span><span><i class="reciteSkippedKey"></i> Skipped</span></div>
+              <section class="reciteHeard" aria-labelledby="reciteHeardTitle">
+                <div class="reciteHeardHeading"><h3 id="reciteHeardTitle">Model heard</h3><span id="reciteHeardStatus">Waiting</span></div>
+                <p class="reciteHeardNote">Direct phonetic output before matching to the Quran. Repeated letters can represent prolonged sounds.</p>
+                <div class="reciteHeardOutput" id="reciteHeardOutput" dir="auto">Start reciting to see what the model hears.</div>
+                <dl class="reciteHeardRows">
+                  <div><dt>Tracker target<br>(Quran text)</dt><dd><bdi id="reciteTrackerWord" lang="ar" dir="rtl">إِنَّ</bdi><span id="reciteTrackerRef">2:6 · word 1</span></dd></div>
+                  <div><dt>Last word result</dt><dd><bdi id="reciteLastWord" lang="ar" dir="rtl">—</bdi><span class="reciteVerdict" id="reciteLastVerdict">Waiting</span></dd></div>
+                </dl>
+                <details class="reciteMatchDetails"><summary>Compare heard and expected sounds</summary>
+                  <dl><dt>Heard sounds</dt><dd id="reciteComparedHeard" lang="ar" dir="rtl">—</dd><dt>Expected sounds</dt><dd id="reciteComparedExpected" lang="ar" dir="rtl">—</dd></dl>
+                  <p id="reciteMatchMetrics">Matching details appear after a word settles.</p>
+                </details>
+                <p class="reciteHeardTiming" id="reciteLiveTiming">Processing time appears when recognition starts.</p>
+              </section>
+              <section id="reciteReview" class="reciteReview" hidden><h3>Words to revisit</h3><ul id="reciteReviewList"></ul></section>
+              <details id="reciteSetup" class="reciteSetup">
+                <summary>Set up local recognition</summary>
+                <p id="reciteModelStatus">The downloaded model will be cached on this browser when you start.</p>
+                <p>The app downloads a verified copy of Quran Lab’s v3.1 model and runs it on your device. If you prefer an original repository download, accept access at <a href="https://huggingface.co/Quran-Lab/zipformer_p-arabic-v3" target="_blank" rel="noopener">Quran Lab on Hugging Face</a>, then download the v3.1 INT8 model and its tokens.txt. Import them below once; they stay in this browser.</p>
+                <label>v3.1 INT8 model (~73 MB)<input id="reciteModelFile" type="file" accept=".onnx"></label>
+                <label>tokens.txt or tokens-prompter.txt<input id="reciteTokensFile" type="file" accept=".txt"></label>
+                <button class="secondary small" id="reciteImport" type="button">Save model locally</button>
+                <button class="secondary small" id="reciteDeleteModel" type="button" hidden>Remove saved model</button>
+                <p>Microphone recognition needs HTTPS. Open <a href="https://sidijilani.github.io/quran-tester/#recite">Hifz Companion</a>; no local server or installation is needed.</p>
+              </details>
+              <p class="recitePrivacy">Voice stays on your device. Sudais audio downloads directly from Quran.com and is cached in this browser. Automatic feedback can be wrong and does not replace a qualified teacher. This prototype checks word progress, not tajweed.</p>
+              <p class="recitePrivacy">Recognition: <a href="https://quranlab.ai/" target="_blank" rel="noopener">Quran Lab</a>. Phonetic text: <a href="https://github.com/obadx/quran-transcript" target="_blank" rel="noopener">quran-transcript</a> / <a href="https://tanzil.net/" target="_blank" rel="noopener">Tanzil</a>.</p>
+              <p class="recitePrivacy">Audio recitation: Abdur-Rahman as-Sudais. Recordings and word timings: <a href="https://quran.com/" target="_blank" rel="noopener">Quran.com / Quran Foundation</a>. Local voice commands: <a href="https://alphacephei.com/vosk/" target="_blank" rel="noopener">Vosk</a>.</p>
+            </aside>
+          </div>
         </section>
 
         <section class="hifzMode" id="hifzPanel" role="tabpanel" aria-labelledby="hifzTab" hidden>

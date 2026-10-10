@@ -40,6 +40,8 @@
     stats: $("stats"),
     testTab: $("testTab"),
     hifzTab: $("hifzTab"),
+    reciteTab: $("reciteTab"),
+    recitePanel: $("recitePanel"),
     mutashabihatTab: $("mutashabihatTab"),
     waqfTab: $("waqfTab"),
     waqfPanel: $("waqfPanel"),
@@ -1501,12 +1503,15 @@
   }
 
   function setActivePanel(mode) {
-    activePanel = ["hifz", "mutashabihat", "waqf"].includes(mode) ? mode : "test";
+    if (activePanel === "recite" && mode !== "recite") window.HIFZ_RECITE.leave();
+    activePanel = ["recite", "hifz", "mutashabihat", "waqf"].includes(mode) ? mode : "test";
+    els.reciteTab.classList.toggle("active", activePanel === "recite");
+    els.recitePanel.hidden = activePanel !== "recite";
     els.testTab.classList.toggle("active", activePanel === "test");
     els.hifzTab.classList.toggle("active", activePanel === "hifz");
     els.mutashabihatTab.classList.toggle("active", activePanel === "mutashabihat");
     els.waqfTab.classList.toggle("active", activePanel === "waqf");
-    [els.testTab, els.hifzTab, els.mutashabihatTab, els.waqfTab].forEach((tab) => {
+    [els.testTab, els.reciteTab, els.hifzTab, els.mutashabihatTab, els.waqfTab].forEach((tab) => {
       const selected = tab.classList.contains("active");
       tab.setAttribute("aria-selected", String(selected));
       tab.tabIndex = selected ? 0 : -1;
@@ -1515,6 +1520,7 @@
     els.hifzPanel.hidden = activePanel !== "hifz";
     els.mutashabihatPanel.hidden = activePanel !== "mutashabihat";
     els.waqfPanel.hidden = activePanel !== "waqf";
+    if (activePanel === "recite") window.HIFZ_RECITE.enter();
     if (activePanel === "hifz") renderHifzPage();
     if (activePanel === "mutashabihat") renderMutashabihatPage();
     if (activePanel === "waqf") renderWaqfPage();
@@ -1610,11 +1616,12 @@
     [els.startAyah, els.endAyah, els.words, els.lines].forEach((input) => input.addEventListener("change", loadNext));
     [els.highlight, els.translation].forEach((input) => input.addEventListener("change", rerenderAnswer));
     els.testTab.addEventListener("click", () => setActivePanel("test"));
+    els.reciteTab.addEventListener("click", () => setActivePanel("recite"));
     els.hifzTab.addEventListener("click", () => setActivePanel("hifz"));
     els.mutashabihatTab.addEventListener("click", () => setActivePanel("mutashabihat"));
     els.waqfTab.addEventListener("click", () => setActivePanel("waqf"));
-    const modeTabs = [els.testTab, els.hifzTab, els.mutashabihatTab, els.waqfTab];
-    const tabModes = ["test", "hifz", "mutashabihat", "waqf"];
+    const modeTabs = [els.testTab, els.reciteTab, els.hifzTab, els.mutashabihatTab, els.waqfTab];
+    const tabModes = ["test", "recite", "hifz", "mutashabihat", "waqf"];
     document.querySelector(".appTabs").addEventListener("keydown", (event) => {
       const current = modeTabs.indexOf(event.target);
       if (current < 0 || !["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
@@ -1643,6 +1650,7 @@
     updateMutashabihatSensitivityLabel();
     document.addEventListener("keydown", (event) => {
       if (event.defaultPrevented || event.target.closest("input, select, textarea, button, .waqfMarker")) return;
+      if (activePanel === "recite") return;
       if (activePanel === "hifz") {
         if (event.key === "ArrowLeft") setHifzPage(hifzPage + 1);
         else if (event.key === "ArrowRight") setHifzPage(hifzPage - 1);
@@ -1664,6 +1672,7 @@
       }
     });
     loadNext();
+    if (location.hash === "#recite") setActivePanel("recite");
     const waqfRoute = location.hash.match(/^#waqf(?:=(\d+))?$/);
     if (waqfRoute) {
       if (waqfRoute[1]) els.waqfPage.value = clamp(waqfRoute[1], 1, 604);

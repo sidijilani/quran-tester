@@ -1065,3 +1065,116 @@ button:disabled {
     width: min(290px, 100%);
   }
 }
+
+/* Recite: the fixed, audited Madani page 3 prototype. */
+.reciteHeading { display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:22px; }
+.reciteHeading h2 { font-size:30px; margin:4px 0; color:var(--deep); }
+.reciteHeading p { margin:6px 0 0; color:var(--muted); line-height:1.6; }
+.recitePageNumber { color:var(--muted); white-space:nowrap; font-size:13px; }
+.reciteSessionSettings, .reciteAudioSettings { display:flex; align-items:center; flex-wrap:wrap; gap:16px; margin-bottom:20px; }
+.reciteSessionSettings label, .reciteAudioSettings label { font-size:12px; color:var(--muted); }
+.reciteSessionSettings select, .reciteAudioSettings select { padding:8px 10px; margin-left:6px; border:1px solid var(--line); border-radius:7px; background:#fffdf7; color:var(--deep); }
+.reciteModeSwitch { display:flex; padding:4px; background:#e9e2d3; border-radius:10px; }
+.reciteModeSwitch button { background:transparent; border:0; border-radius:7px; padding:9px 22px; color:var(--muted); cursor:pointer; }
+.reciteModeSwitch button[aria-pressed="true"] { background:#fffdf7; color:var(--deep); box-shadow:0 2px 6px #493d2520; }
+.reciteSessionRange { font-size:11px; color:var(--muted); }
+.reciteAudioSettings { padding:16px; border:1px solid var(--line); border-radius:12px; background:#fffdf7; }
+.reciteAudioSettings p { flex-basis:100%; font-size:12px; line-height:1.7; color:var(--muted); margin:0; }
+.reciteCheckbox { display:flex; align-items:center; gap:7px; }
+.reciteAudioCard { padding:16px; margin-bottom:20px; border:1px solid var(--line); border-radius:12px; background:#fffdf7; }
+.reciteAudioCard h3 { font-size:17px; margin:8px 0; color:var(--deep); }
+.reciteAudioCard[data-state="playing"] { border-color:#487d67; }
+.reciteAudioCard > p { font-size:12px; color:var(--muted); line-height:1.7; }
+.reciteAudioNote, .reciteCommandsStatus { font-size:11px; line-height:1.7; color:var(--muted); }
+.reciteMode[data-practice-mode="audio"] .reciteLegend { margin-top:18px; }
+#reciteAudioSettings[hidden], #reciteAudioTools[hidden], #reciteAudioCard[hidden] { display:none; }
+.reciteLayout { display:grid; grid-template-columns:minmax(0,486px) minmax(260px,1fr); gap:32px; align-items:start; }
+.recitePaper { position:relative; width:100%; max-width:486px; margin:0 auto; background:white; box-shadow:0 7px 28px #45361e1a; }
+.recitePaper img { display:block; width:100%; height:auto; }
+.recitePaper svg { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+.reciteControls { padding:12px 0; min-width:0; }
+.reciteStatusRow { display:flex; align-items:center; gap:9px; color:var(--deep); }
+.reciteStatusDot { width:9px; height:9px; background:#a89c84; border-radius:50%; flex:none; }
+.reciteStatusDot.listening { background:#487d67; box-shadow:0 0 0 5px #487d6718; }
+.reciteStatusDot.retry { background:#a54d48; }
+.reciteBadge { margin-left:auto; font-size:11px; padding:4px 8px; border-radius:5px; background:#e8ddc2; }
+#reciteMessage { line-height:1.7; color:var(--muted); min-height:82px; margin:14px 0 18px; }
+.reciteProgress { display:flex; justify-content:space-between; gap:12px; font-size:12px; color:var(--muted); }
+#reciteProgress { width:100%; height:6px; border:0; border-radius:8px; overflow:hidden; margin:10px 0 22px; accent-color:#487d67; }
+#reciteProgress::-webkit-progress-bar { background:#e7deca; }
+#reciteProgress::-webkit-progress-value { background:#487d67; }
+.reciteActions { display:flex; flex-wrap:wrap; gap:8px; }
+.reciteActions button { flex:1 1 auto; }
+.reciteTools { display:flex; flex-wrap:wrap; gap:6px; margin:18px 0; }
+.reciteTools button { font-size:12px; padding:7px 10px; }
+.reciteDemoControls { border:1px dashed #c5b58a; border-radius:9px; padding:12px; margin-top:14px; background:#f3ebd7; }
+.reciteDemoControls p { margin:0 0 10px; font-size:12px; line-height:1.5; color:var(--muted); }
+.reciteDemoControls button { margin:0 4px 4px 0; }
+.reciteLegend { display:flex; flex-wrap:wrap; gap:18px; font-size:12px; color:var(--muted); margin-bottom:24px; }
+.reciteLegend span { display:flex; align-items:center; gap:6px; }
+.reciteLegend i { width:10px; height:10px; border-radius:3px; border:1px solid; }
+.reciteCueKey { background:#d4b96940; border-color:#ac8834 !important; }
+.reciteUnclearKey { background:#d99e4940; border-color:#b87228 !important; border-style:dashed !important; }
+.reciteWrongKey { background:#b64b4b30; border-color:#b64b4b !important; }
+.reciteSkippedKey { background:#87909925; border-color:#7d8792 !important; }
+.reciteReview { border-top:1px solid var(--line); padding:10px 0 14px; }
+.reciteReview h3 { font-size:15px; }
+.reciteReview ul { padding:0; list-style:none; }
+.reciteReview li { display:flex; justify-content:space-between; gap:10px; padding:7px 0; color:var(--muted); font-size:13px; }
+.reciteReview bdi { font-family:serif; font-size:24px; color:var(--ink); }
+.reciteReview li[data-kind="wrong"] > span { color:#a34242; }
+.reciteReview li[data-kind="unclear"] > span { color:#966515; }
+.reciteHeard { border:1px solid var(--line); border-radius:12px; background:#fffdf7; padding:16px; margin-bottom:20px; min-width:0; }
+.reciteHeardHeading { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.reciteHeardHeading h3 { margin:0; font-size:16px; color:var(--deep); }
+.reciteHeardHeading > span { font-size:11px; color:var(--muted); }
+.reciteHeardNote { font-size:11px; line-height:1.6; color:var(--muted); margin:9px 0; }
+.reciteHeardOutput { background:#f3f0e6; border-radius:8px; padding:12px; min-height:64px; max-height:160px; overflow:auto; overflow-wrap:anywhere; font-family:serif; font-size:24px; line-height:1.7; white-space:pre-wrap; }
+.reciteHeardOutput[data-empty="true"] { font-family:inherit; font-size:12px; color:var(--muted); }
+.reciteHeardPrevious { color:#8a8072; }
+.reciteHeardNewest { background:#e6d7ad70; border-radius:3px; }
+.reciteHeardRows { margin:12px 0; }
+.reciteHeardRows > div { display:flex; justify-content:space-between; gap:14px; padding:8px 0; border-bottom:1px solid var(--line); }
+.reciteHeardRows dt { font-size:12px; color:var(--muted); padding-top:5px; }
+.reciteHeardRows dd { margin:0; min-width:0; text-align:right; }
+.reciteHeardRows bdi { display:block; font-family:serif; font-size:24px; line-height:1.5; }
+.reciteHeardRows dd > span { display:block; font-size:11px; color:var(--muted); margin-top:3px; }
+.reciteVerdict[data-state="wrong"] { color:#a34242; }
+.reciteVerdict[data-state="unsure"] { color:#966515; }
+.reciteVerdict[data-state="ok"] { color:#487d67; }
+.reciteMatchDetails summary { cursor:pointer; font-size:12px; color:var(--deep); line-height:1.6; }
+.reciteMatchDetails dl { margin:12px 0; }
+.reciteMatchDetails dt { font-size:11px; color:var(--muted); }
+.reciteMatchDetails dd { margin:3px 0 12px; font-family:serif; font-size:23px; line-height:1.5; overflow-wrap:anywhere; }
+.reciteMatchDetails p, .reciteHeardTiming { font-size:11px; line-height:1.6; color:var(--muted); margin-bottom:0; }
+.reciteSetup { border-top:1px solid var(--line); padding-top:16px; }
+.reciteSetup summary { cursor:pointer; font-size:13px; color:var(--deep); }
+.reciteSetup p { font-size:12px; line-height:1.7; color:var(--muted); overflow-wrap:anywhere; }
+.reciteSetup label { display:block; font-size:12px; margin:15px 0; }
+.reciteSetup input { display:block; width:100%; font-size:11px; margin-top:6px; padding:7px; }
+.reciteSetup button { margin:0 4px 6px 0; }
+.recitePrivacy { font-size:11px; line-height:1.7; color:var(--muted); margin-top:22px; }
+@media (max-width:850px) {
+  .reciteLayout { grid-template-columns:1fr; gap:18px; }
+  .reciteControls { max-width:486px; width:100%; margin:auto; }
+  #reciteMessage { min-height:0; }
+}
+@media (max-width:400px) {
+  .appTabs { gap:3px; padding:0 4px; }
+  .tab { font-size:11px; padding-left:7px; padding-right:7px; }
+  .reciteHeading h2 { font-size:25px; }
+  .reciteHeading p { font-size:12px; }
+}
+
+/* Recite shares Test's page or ayah range, with its own saved selection. */
+.reciteRange{margin:0 0 20px;padding:14px 18px;border:1px solid var(--border,#ded8cc);border-radius:12px;min-width:0}
+.reciteRange legend{padding:0 6px;font-size:13px;font-weight:700}
+.reciteRangeModes,.reciteRangeFields{display:flex;flex-wrap:wrap;align-items:end;gap:12px 18px}
+.reciteRangeModes{margin-bottom:12px}
+.reciteRangeModes label{display:flex;gap:6px;align-items:center;font-size:13px}
+.reciteRangeFields label{display:grid;gap:5px;font-size:12px}
+.reciteRangeFields input{width:100px}
+.reciteRangeFields select{max-width:250px}
+.reciteRange input,.reciteRange select{padding:8px;border:1px solid #d8d1c3;border-radius:7px;background:#fff;color:inherit;font:inherit}
+.reciteRange p{font-size:12px;line-height:1.5;margin:12px 0 0;color:#797466}
+.reciteRangeFields[hidden]{display:none}

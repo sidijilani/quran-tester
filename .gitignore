@@ -2,3 +2,18 @@
 /tmp/
 __pycache__/
 *.py[cod]
+
+# Publish the pinned recognition model as a static asset; ignore partial/other downloads.
+/assets/models/recite/*.onnx*
+!/assets/models/recite/zipformer_p_arabic_v3.1.int8.onnx
+
+# Reproducible local recitation cache and command weights.
+/assets/audio/sudais/*.mp3*
+/assets/models/commands/*.tar.gz*
+!/assets/models/commands/vosk-model-small-en-us-0.15.tar.gz
+
+# Per-ayah, expiring application audio metadata.
+/assets/audio/sudais/[0-9]*.json*
+
+# Development-only audio snapshots; live audio is fetched/cached by the browser.
+/data/recite/sudais.js
