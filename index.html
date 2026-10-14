@@ -202,13 +202,10 @@
               </section>
               <section id="reciteReview" class="reciteReview" hidden><h3>Words to revisit</h3><ul id="reciteReviewList"></ul></section>
               <details id="reciteSetup" class="reciteSetup">
-                <summary>Set up local recognition</summary>
-                <p id="reciteModelStatus">The downloaded model will be cached on this browser when you start.</p>
-                <p>The app downloads a verified copy of Quran Lab’s v3.1 model and runs it on your device. If you prefer an original repository download, accept access at <a href="https://huggingface.co/Quran-Lab/zipformer_p-arabic-v3" target="_blank" rel="noopener">Quran Lab on Hugging Face</a>, then download the v3.1 INT8 model and its tokens.txt. Import them below once; they stay in this browser.</p>
-                <label>v3.1 INT8 model (~73 MB)<input id="reciteModelFile" type="file" accept=".onnx"></label>
-                <label>tokens.txt or tokens-prompter.txt<input id="reciteTokensFile" type="file" accept=".txt"></label>
-                <button class="secondary small" id="reciteImport" type="button">Save model locally</button>
-                <button class="secondary small" id="reciteDeleteModel" type="button" hidden>Remove saved model</button>
+                <summary>Recognition model</summary>
+                <p id="reciteModelStatus">The model loads automatically when you start reciting.</p>
+                <p>Quran Lab’s v3.1 model (~73 MB) is included with this app. On your first start, it loads from this site and is saved in your browser for future sessions. Recognition runs on your device.</p>
+                <button class="secondary small" id="reciteDeleteModel" type="button" hidden>Clear cached model</button>
                 <p>Microphone recognition needs HTTPS. Open <a href="https://sidijilani.github.io/quran-tester/#recite">Hifz Companion</a>; no local server or installation is needed.</p>
               </details>
               <p class="recitePrivacy">Voice stays on your device. Sudais audio downloads directly from Quran.com and is cached in this browser. Automatic feedback can be wrong and does not replace a qualified teacher. This prototype checks word progress, not tajweed.</p>

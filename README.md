@@ -186,9 +186,9 @@ at the user's request. Only static source review and syntax checks were used.
 
 Use [Hifz Companion on GitHub Pages](https://sidijilani.github.io/quran-tester/#recite)
 and click **Start reciting**. Recognition models are downloaded as static assets,
-verified against their pinned checksums, and cached on this browser. Manual
-model import remains available, including original HF files after its separate
-access approval. The deployed symbol table has its own checksum. The app remains
+verified against their pinned checksums, and cached on this browser. The app
+loads its bundled model automatically; users do not need to obtain or select
+model files. The deployed symbol table has its own checksum. The app remains
 free and ad-free.
 
 Development only: regenerate missing model assets with

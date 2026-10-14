@@ -7,11 +7,11 @@
   let reference=null,preparing=false,preparation=0,rolling=false,initialized=false;
   practice.index=sessionStart;
   const $=id=>document.getElementById('recite'+id);
-  const ui=Object.fromEntries(['Mask','State','Message','Count','ReviewCount','Progress','StatusDot','ModeBadge','Start','Demo','Retry','Pause','DemoControls','DemoNext','DemoMistake','Hint','Restart','Reveal','Review','ReviewList','Setup','ModelStatus','ModelFile','TokensFile','Import','DeleteModel',
+  const ui=Object.fromEntries(['Mask','State','Message','Count','ReviewCount','Progress','StatusDot','ModeBadge','Start','Demo','Retry','Pause','DemoControls','DemoNext','DemoMistake','Hint','Restart','Reveal','Review','ReviewList','Setup','ModelStatus','DeleteModel',
     'HeardOutput','HeardStatus','TrackerWord','TrackerRef','LastWord','LastVerdict','ComparedHeard','ComparedExpected','MatchMetrics','LiveTiming',
     'VisualMode','AudioMode','AudioSettings','AudioCard','Range','PageRange','AyahRange','StartPage','EndPage','StartSurah','EndSurah','StartAyah','EndAyah','SessionRange','Attempts','CueWords','VoiceCommands','AudioTools','PlayCue','PlayHelp','NewTest','CacheAudio','Interrupt','EndSession','PlaybackStatus','AttemptStatus','AudioAyah','CommandsStatus','WakeStatus','OfflineStatus'].map(id=>[id,$(id)]));
   const ns='http://www.w3.org/2000/svg';
-  let mode='idle', visible=false, revealed=false, epoch=0, stream=null, context=null, capture=null, worker=null, modelInstalled=false, cancelReady=null;
+  let mode='idle', visible=false, revealed=false, epoch=0, stream=null, context=null, capture=null, worker=null, cancelReady=null;
   let cueSound=null, lastCueAt=0, alignmentGeneration=0;
   let lastDiagnosis=null;
   let practiceMode='visual',audioPackets=[],packetSamples=0,wakeLock=null,heldTracking=[],shellRegistration=null;
@@ -506,7 +506,7 @@
   }
   async function hash(bytes,algorithm='SHA-256') { return Array.from(new Uint8Array(await crypto.subtle.digest(algorithm,bytes)),b=>b.toString(16).padStart(2,'0')).join(''); }
   async function validate(record) {
-    if(!record || record.model.size!==data.catalog.model.modelBytes) throw Error('Import the approved v3.1 INT8 model and tokens.txt first.');
+    if(!record || record.model.size!==data.catalog.model.modelBytes) throw Error('The recognition model is incomplete. Clear the cached model, then start again to reload it from this site.');
     const bytes=await record.model.arrayBuffer();
     if(await hash(bytes)!==data.catalog.model.modelSha256) throw Error('The model checksum does not match the pinned v3.1 INT8 release.');
     const tokenData=new TextEncoder().encode(record.tokens);
@@ -519,21 +519,6 @@
     const alphabet=new Set(tokens.slice(0,250).join(''));
     if(words.some(w=>w.phones?.some(p=>Array.from(p.replace(/\s/gu,'')).some(c=>!alphabet.has(c))))) throw Error('The phoneme fixture is incompatible with this token table.');
     return {bytes,tokens};
-  }
-  async function install() {
-    ui.Import.disabled=true;
-    try {
-      const model=ui.ModelFile.files[0], file=ui.TokensFile.files[0];
-      if(!model || !file) throw Error('Choose both the ONNX model and tokens.txt.');
-      if(file.size>20000) throw Error('Unexpected token table size.');
-      ui.ModelStatus.textContent='Checking the model checksum…';
-      const record={model,tokens:await file.text()}; await validate(record); await stored('put',record);
-      modelInstalled=true; ui.DeleteModel.hidden=false;
-      ui.ModelStatus.textContent='v3.1 INT8 saved in this browser. Ready for a microphone trial.';
-      ui.ModelFile.value=''; ui.TokensFile.value='';
-      if(navigator.storage?.persist) navigator.storage.persist().catch(()=>{});
-    } catch(e) { ui.ModelStatus.textContent=e.message; }
-    finally { ui.Import.disabled=false; }
   }
   async function start() {
     if(mode==='audio-paused'){resumeAudio();return;}
@@ -550,18 +535,18 @@
       reference=await data.window(practice.index,sessionEnd);if(token!==epoch)return;
       let record=await stored('get'); if(token!==epoch) return;
       if(!record) {
-        status('Preparing recognition','Saving the downloaded model in this browser for future offline sessions. You can cancel.');
+        status('Preparing recognition','Loading the model from this site and saving it for future sessions. You can cancel.');
         const abort=new AbortController();cancelReady=()=>abort.abort();
         const responses=await Promise.all([
           fetch('assets/models/recite/zipformer_p_arabic_v3.1.int8.onnx',{signal:abort.signal}),
           fetch('assets/models/recite/tokens-prompter.txt',{signal:abort.signal})
         ]);
-        if(responses.some(r=>!r.ok)) throw Error('Recognition model could not download. Check your connection or import the model in setup.');
+        if(responses.some(r=>!r.ok)) throw Error('Recognition model could not load from this site. Check your connection and try again.');
         record={model:await responses[0].blob(),tokens:await responses[1].text()};
         if(token!==epoch) return;
         await validate(record);if(token!==epoch) return;
         await stored('put',record);if(token!==epoch) return;
-        cancelReady=null;modelInstalled=true;ui.DeleteModel.hidden=false;
+        cancelReady=null;ui.DeleteModel.hidden=false;
         if(navigator.storage?.persist) navigator.storage.persist().catch(()=>{});
       }
       const {bytes,tokens}=await validate(record); if(token!==epoch) return;
@@ -654,10 +639,9 @@
   ui.Hint.addEventListener('click',()=>{ practice.hint(); status('A little help','The current word is visible. Recite it to continue; it will stay marked for review.'); });
   ui.Restart.addEventListener('click',async()=>{ stopCapture();practice.reset();policy.focus=null;practice.index=sessionStart;await realign(sessionStart,true);guideTarget=sessionStart;resetDiagnostics();revealed=false;mode='idle';status('Ready to practice','The opening cue words are visible. Begin at the first word; the outline shows your place.'); });
   ui.Reveal.addEventListener('click',()=>{ stopCapture(); mode='idle'; revealed=true; status('Page revealed','Practice has ended. Read through the page, then start over for another pass.'); });
-  ui.Import.addEventListener('click',install);
   ui.DeleteModel.addEventListener('click',async()=>{
     paused();
-    try { await stored('delete'); modelInstalled=false;ui.DeleteModel.hidden=true;ui.ModelStatus.textContent='Saved model removed.'; }
+    try { await stored('delete'); ui.DeleteModel.hidden=true;ui.ModelStatus.textContent='Model cache cleared. It will load from this site when you start again.'; }
     catch(e) { ui.ModelStatus.textContent=e.message; }
   });
   document.addEventListener('visibilitychange',()=>{ if(document.hidden)paused(practiceMode==='audio'?'Audio practice paused because this app left the foreground. Resume with the app open.':'Your place is saved. Resume when you’re ready.'); });
@@ -673,7 +657,7 @@
     leave() { visible=false; paused(); if(cueSound) cueSound.suspend().catch(()=>{}); },
   };
   stored('get').then(record=>{
-    modelInstalled=!!record;ui.DeleteModel.hidden=!record;
+    ui.DeleteModel.hidden=!record;
     if(record) ui.ModelStatus.textContent='Saved v3.1 INT8 model found. Checksum is verified before each start.';
   }).catch(()=>{ ui.ModelStatus.textContent='Browser storage is unavailable here. Open the HTTPS app to save the model.'; });
   function rangeControls() {

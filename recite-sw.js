@@ -1,7 +1,7 @@
 /* Shell activation waits for an idle view. Quran pages cache on demand;
    Direct Quran.com audio/metadata caches are managed by ReciteGuide in the
    browser, with independent seven-day expiries. Model weights use IDB. */
-const VERSION='hifz-recite-v12-client-only';
+const VERSION='hifz-recite-v13-bundled-model';
 const FILES=['./','index.html','styles.css','app.js','recite.js','recite-data.js','recite-core.js','recite-tracker.js','recite-worker.js','recite-fbank.js','recite-audio.js','recite-guide.js','recite-commands.js',
   'data/recite/catalog.js','data/recite/page-3.js','data/recite/page-4.js','data/quran-data.js','data/line-bands.js','data/ayah-layout-manifest.js',
   'data/hifz-chunks-manifest.js','data/mutashabihat-manifest.js','data/waqf/manifest.js','assets/app-icon.png','assets/pages/3.jpg','assets/pages/4.jpg','assets/vendor/vosk-browser-0.0.8/vosk.js',
